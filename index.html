@@ -271,6 +271,10 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .settings-row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
 .settings-row label { font-size: 13px; color: var(--ink-2); min-width: 4.5em; }
 .muted-note { font-size: 12px; color: var(--muted); line-height: 1.7; margin-top: 6px; }
+.backup button { width: 100%; margin-top: 8px; }
+.backup .addrow { display: flex; gap: 8px; margin: 8px 0; }
+.backup .addrow button { width: auto; flex-shrink: 0; margin-top: 0; }
+.backup .addrow input { min-width: 0; }
 select.mini { padding: 8px; }
 </style>
 </head>
@@ -513,12 +517,7 @@ function viewHome() {
   if (state.form && state.tab === 'home') addArea = `<div class="card">${logFormHtml()}</div>`;
   else addArea = `<button style="width:100%;padding:12px" onclick="startAdd('${todayISO()}')">＋ 学習を手動で記録</button>`;
 
-  const recent = store.logs.slice().sort((a, b) => b.date.localeCompare(a.date) || a.part.localeCompare(b.part)).slice(0, 6);
-  const recentHtml = recent.length
-    ? `<div class="card">${recent.map(logItemHtml).join('')}</div>`
-    : `<div class="card"><div class="empty">まだ記録がありません。<br>「過去問を解く」または手動記録から始めましょう。</div></div>`;
-
-  return `<h1>応用情報 学習記録</h1>${hero}${kpi}${accLine}${practiceBtn}${addArea}<h2>直近の記録</h2>${recentHtml}`;
+  return `<h1>応用情報 学習記録</h1>${hero}${kpi}${accLine}${practiceBtn}${addArea}`;
 }
 function logItemHtml(l) {
   const rate = l.total ? Math.round(l.correct / l.total * 100) : 0;
@@ -829,50 +828,179 @@ function viewSettings() {
     <div class="settings-row"><span>累計 解答数</span><b class="num" style="margin-left:auto">${correct} / ${total} 問</b></div>
     <div class="settings-row"><span>演習 挑戦済み / 正解 / 弱点</span><b class="num" style="margin-left:auto">${attemptedN} / ${okN} / ${weak} 問</b></div>
   </div>
-  <h2>収録している過去問（年度別の進捗）</h2>
-  <div class="card">
-    ${examSummaryHtml(false)}
-    <div class="muted-note">${esc(BANK_META.source || '')}<br>問題文・選択肢・正解はIPA公開の過去問題／解答例に基づきます（出典明記を条件にIPAが再利用を許諾）。<br>図表・プログラムを含む問題はv1では収録していません。<br><b>解説はAIが生成したものであり、誤りを含む可能性があります。</b>最終確認は公式解答例や過去問道場でお願いします。</div>
+  <h2>クラウド自動バックアップ</h2>
+  <div class="card backup">
+    ${cloudSettingsHtml()}
   </div>
-  <h2>データ管理</h2>
-  <div class="card">
-    <div class="rowbtns">
-      <button onclick="exportData()">エクスポート</button>
-      <button onclick="document.getElementById('importFile').click()">インポート</button>
-    </div>
+  <h2>データ</h2>
+  <div class="card backup">
+    <button onclick="exportJson()">📤 バックアップをエクスポート（JSON）</button>
+    <button onclick="document.getElementById('importFile').click()">📥 バックアップをインポート（JSON）</button>
     <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this)">
-    <button class="danger" style="width:100%;margin-top:8px" onclick="resetProgress()">演習の習熟データをリセット</button>
-    <div class="muted-note">データはこの端末のブラウザ内（localStorage）にのみ保存されます。サーバーには送信されません。機種変更や別端末との共有はエクスポート/インポートで行ってください。</div>
+    <button class="danger" onclick="resetProgress()">🔁 演習の習熟データだけリセット</button>
+    <button class="danger" onclick="wipeAll()">🗑 すべてのデータを削除</button>
+    <div class="hint">データはこの端末のブラウザ内（localStorage）にだけ保存されます。記録日数: ${logDates().length}日・演習挑戦: ${attemptedN}問。機種変更や別端末との共有はクラウド自動バックアップ、またはJSONのエクスポート→インポートで。</div>
   </div>
-  <div class="muted-note" style="text-align:center;padding:10px">応用情報 学習記録 · v1<br>${esc(BANK_META.source || '')}</div>`;
+  <div class="muted-note" style="text-align:center;padding:10px">応用情報 学習記録 · v1<br>${esc(BANK_META.source || '')}<br>問題・正解はIPA公開の過去問題／解答例に基づきます（出典明記を条件にIPAが再利用を許諾）。<b>解説はAI生成で誤りを含む可能性があります。</b></div>`;
 }
 function setExamDate(v) { if (v) { store.examDate = v; save(); render(); } }
 function setExamName(v) { store.examName = (v || '').trim() || DEFAULT_EXAM_NAME; save(); render(); }
 function resetExam() { store.examDate = DEFAULT_EXAM_DATE; store.examName = DEFAULT_EXAM_NAME; save(); render(); toast('既定の試験日に戻しました'); }
 function resetProgress() { if (!confirm('演習の習熟（正解／弱点）・メモ・中断セッションを消去します。学習ログは残ります。よろしいですか？')) return; store.mastery = {}; store.qmemo = {}; store.session = null; state.practice = null; save(); render(); toast('習熟データをリセットしました'); }
-function exportData() {
-  const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+function exportJson() {
+  const blob = new Blob([JSON.stringify(store, null, 1)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `ap-study-${todayISO()}.json`;
+  a.href = url; a.download = `ap-study-backup-${todayISO().replace(/-/g, '')}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast('エクスポートしました');
 }
 function importData(input) {
-  const file = input.files && input.files[0]; if (!file) return;
+  const file = input.files && input.files[0]; if (!file) { return; }
   const reader = new FileReader();
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      if (!data || !Array.isArray(data.logs)) throw new Error('bad');
-      if (!confirm('現在のデータを上書きしてインポートします。よろしいですか？')) return;
+      if (!data || !Array.isArray(data.logs)) throw new Error('形式が違います');
+      if (!confirm(`インポートすると現在のデータを置き換えます。よろしいですか？`)) { input.value = ''; return; }
       store = migrate(data);
-      save(); render(); toast('インポートしました');
-    } catch (e) { alert('読み込めませんでした。エクスポートしたJSONファイルを選んでください。'); }
+      save(); render(); alert('インポート完了');
+    } catch (e) { alert('インポート失敗: ' + (e && e.message || e)); }
     input.value = '';
   };
   reader.readAsText(file);
+}
+function wipeAll() {
+  if (!confirm('すべての記録・演習の習熟データを削除します。よろしいですか？')) return;
+  if (!confirm('本当に削除しますか？（エクスポートしていないデータは戻せません）')) return;
+  try { localStorage.removeItem(LS_KEY); } catch (e) {}
+  store = loadStore(); state.practice = null; render();
+}
+
+/* ================= クラウド自動バックアップ（家計簿・筋トレアプリと同一仕様） ================= */
+// アプリを開いたとき1日1回、非公開GitHubリポジトリへ全データをアップロードする。
+// トークン（Fine-grained PAT）は端末のlocalStorageにのみ保存され、エクスポートにも含まれない。
+const CLOUD_REPO = 'prkxfzmfx-pixel/app-backups';
+const CLOUD_FILE = 'apstudy.json';
+const CLOUD_TOKEN_KEY = 'apstudy.cloudToken';
+const CLOUD_META_KEY = 'apstudy.cloudMeta';
+function cloudMeta() { try { return JSON.parse(localStorage.getItem(CLOUD_META_KEY) || '{}'); } catch (e) { return {}; } }
+function setCloudMeta(m) { try { localStorage.setItem(CLOUD_META_KEY, JSON.stringify(m)); } catch (e) {} }
+function b64utf8(s) { const bytes = new TextEncoder().encode(s); let bin = ''; for (const b of bytes) bin += String.fromCharCode(b); return btoa(bin); }
+function cloudApi() { return `https://api.github.com/repos/${CLOUD_REPO}/contents/${CLOUD_FILE}`; }
+function cloudHeaders(token) { return { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' }; }
+function recordCount(s) { return ((s && Array.isArray(s.logs)) ? s.logs.length : 0) + ((s && s.mastery) ? Object.keys(s.mastery).length : 0); }
+async function cloudBackup(force) {
+  const token = localStorage.getItem(CLOUD_TOKEN_KEY);
+  if (!token) return { skipped: 'no-token' };
+  const today = todayISO();
+  if (!force && cloudMeta().last === today) return { skipped: 'done-today' };
+  try {
+    let sha;
+    const g = await fetch(cloudApi(), { headers: cloudHeaders(token) });
+    if (g.status === 200) sha = (await g.json()).sha;
+    const res = await fetch(cloudApi(), {
+      method: 'PUT', headers: cloudHeaders(token),
+      body: JSON.stringify({ message: '自動バックアップ ' + today, content: b64utf8(JSON.stringify(store)), ...(sha ? { sha } : {}) }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    setCloudMeta({ last: today, ok: true });
+    if (state.tab === 'settings') render();
+    return { ok: true };
+  } catch (e) {
+    setCloudMeta({ ...cloudMeta(), ok: false, err: String(e && e.message || e) });
+    if (state.tab === 'settings') render();
+    return { error: String(e && e.message || e) };
+  }
+}
+function cloudSettingsHtml() {
+  const meta = cloudMeta();
+  const tokenSet = !!localStorage.getItem(CLOUD_TOKEN_KEY);
+  let status;
+  if (!tokenSet) status = '未設定（かんたん設定コードかトークンを入れると有効になります）';
+  else if (!meta.last) status = 'トークン設定済み・バックアップ未実行';
+  else status = `最終バックアップ: ${meta.last}` + (meta.ok === false ? `　⚠️前回エラー: ${esc(meta.err || '')}` : ' ✅');
+  return `
+    <div class="hint">アプリを開いたとき1日1回、非公開リポジトリ（${CLOUD_REPO}）へ自動バックアップします。過去の世代も履歴に残ります。</div>
+    <div style="font-size:13px">${status}</div>
+    <div class="addrow">
+      <input type="password" id="cloudPin" inputmode="numeric" maxlength="6" placeholder="かんたん設定コード（6桁）" style="flex:1">
+      <button class="primary" onclick="applyPinToken()">適用</button>
+    </div>
+    <div class="addrow">
+      <input type="password" id="cloudToken" placeholder="${tokenSet ? '設定済み（変更時のみ入力）' : 'GitHubトークンを貼り付け'}" style="flex:1">
+      <button class="primary" onclick="saveCloudToken()">保存</button>
+    </div>
+    <button onclick="cloudBackupNow()">☁️ 今すぐバックアップ</button>
+    <button onclick="cloudRestore()">⬇️ クラウドから復元</button>
+    ${tokenSet ? '<button class="danger" onclick="clearCloudToken()">バックアップ停止（トークン削除）</button>' : ''}`;
+}
+/* かんたん設定: 6桁コードを入力すると、埋め込みの暗号文(PIN_BLOB)からトークンを復号して適用する。
+   PIN_BLOB は base64(salt16 | iv12 | AES-GCM暗号文)。コード本体・平文トークンはリポジトリに置かない。
+   暗号文の生成: node tools\make-pin-blob.js <6桁コード> <トークン>（ローカル実行のみ）。
+   ※未登録（空）の間は「トークン直接貼り付け」で有効化できる。 */
+const PIN_BLOB = '';
+async function decryptWithPin(pin, blobB64) {
+  const raw = Uint8Array.from(atob(blobB64), ch => ch.charCodeAt(0));
+  const salt = raw.slice(0, 16), iv = raw.slice(16, 28), ct = raw.slice(28);
+  const keyMat = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' },
+    keyMat, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return new TextDecoder().decode(pt);
+}
+async function applyPinToken() {
+  const pin = document.getElementById('cloudPin').value.trim();
+  if (!PIN_BLOB) { alert('この端末のアプリにはかんたん設定コードが未登録です。GitHubトークンを直接貼り付けて保存してください。'); return; }
+  let token;
+  try {
+    if (!/^\d{6}$/.test(pin)) throw new Error('bad pin');
+    token = await decryptWithPin(pin, PIN_BLOB);
+  } catch (e) { alert('パスワードが間違っています'); return; }
+  document.getElementById('cloudToken').value = token;
+  await saveCloudToken();
+}
+async function saveCloudToken() {
+  const v = document.getElementById('cloudToken').value.trim();
+  if (!v) { alert('トークンを入力してください'); return; }
+  localStorage.setItem(CLOUD_TOKEN_KEY, v);
+  try {
+    const res = await fetch(cloudApi(), { headers: { 'Authorization': 'Bearer ' + v, 'Accept': 'application/vnd.github.raw+json' } });
+    if (res.ok) {
+      const s = JSON.parse(await res.text());
+      if (s && Array.isArray(s.logs) && recordCount(s) > recordCount(store) &&
+          confirm(`クラウドに既存のバックアップ（記録${recordCount(s)}件）が見つかりました。この端末に復元しますか？\n\n（キャンセルすると、この端末のデータが今後のバックアップとして上書きされます）`)) {
+        store = migrate(s); save(); setCloudMeta({ last: todayISO(), ok: true }); render();
+        alert('復元完了。自動バックアップも有効になりました'); return;
+      }
+    } else if (res.status !== 404) { throw new Error('HTTP ' + res.status); }
+    const r = await cloudBackup(true);
+    alert(r.ok ? '設定完了。バックアップに成功しました' : 'バックアップ失敗: ' + (r.error || ''));
+    render();
+  } catch (e) {
+    alert('接続失敗: ' + (e && e.message || e) + '\nトークンの権限（app-backupsリポのContents: Read and write）を確認してください');
+    render();
+  }
+}
+function clearCloudToken() {
+  if (!confirm('自動バックアップを停止しますか？（トークンを削除。クラウド上の既存バックアップは残ります）')) return;
+  localStorage.removeItem(CLOUD_TOKEN_KEY); render();
+}
+function cloudBackupNow() {
+  cloudBackup(true).then(r => alert(r.ok ? 'バックアップ完了' : (r.skipped === 'no-token' ? 'トークンが未設定です' : 'バックアップ失敗: ' + (r.error || ''))));
+}
+async function cloudRestore() {
+  const token = localStorage.getItem(CLOUD_TOKEN_KEY);
+  if (!token) { alert('トークンが未設定です'); return; }
+  try {
+    const res = await fetch(cloudApi(), { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.raw+json' } });
+    if (!res.ok) throw new Error(res.status === 404 ? 'クラウドにバックアップがまだありません' : 'HTTP ' + res.status);
+    const s = JSON.parse(await res.text());
+    if (!s || !Array.isArray(s.logs)) throw new Error('形式が違います');
+    if (!confirm(`クラウドのバックアップ（記録${recordCount(s)}件）で現在のデータを置き換えます。よろしいですか？`)) return;
+    store = migrate(s); save(); render(); alert('復元完了');
+  } catch (e) { alert('復元失敗: ' + (e && e.message || e)); }
 }
 
 /* ---- トースト ---- */
@@ -895,6 +1023,9 @@ if (typeof document !== 'undefined' && document.getElementById && document.getEl
   window.addEventListener('resize', fitViewport);
   fitViewport();
   render();
+  cloudBackup();
+  // アプリを閉じずに日をまたいで前面復帰したときもバックアップされるように
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) cloudBackup(); });
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
@@ -911,6 +1042,7 @@ if (typeof module !== 'undefined' && module.exports) {
     statusOf, isAttempted, isWeak, isOk, weakList, applyResult, examProgress, validSession, persistSession, resumeSession,
     startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl, UNKNOWN,
     setExamDate, setExamName, resetExam, resetProgress, daysUntilExam, daysBetween, todayISO, addDays,
+    exportJson, importData, wipeAll, cloudBackup, cloudSettingsHtml, decryptWithPin, applyPinToken, saveCloudToken, cloudRestore, recordCount,
     BANK, BANK_META, BANK_BY_ID, _ls: LS_KEY,
   };
 }
