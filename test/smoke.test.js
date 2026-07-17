@@ -92,32 +92,31 @@ let ser = api.accuracySeries('am');
 assert(ser.length === 1 && Math.round(ser[0].rate) === 70, '午前系列 70%');
 console.log('OK 手動ログ追加 → 正答率系列に反映（70%）');
 
-// 5) 演習: 令和6年秋を開始 → 正解を選ぶ → 記録・習熟が更新
+// 5) 演習: 令和6年秋を開始 → 正解を選ぶ → 記録・習熟が更新（未挑戦→正解）
 api.pickExam('6_aki');
 api.startPractice('year');
 assert(api.state.practice && api.state.practice.queue.length === api.BANK.length, '年度演習キュー');
 const q0 = api.BANK_BY_ID[api.state.practice.queue[0]];
 api.answerQuiz(q0.answer);   // 正解
 assert(api.state.practice.picked === q0.answer, '解答が記録される');
-const m0 = api.masteryOf(q0.id);
-assert(m0.seen === 1 && m0.correctStreak === 1, '習熟: seen1 streak1');
+assert(api.isOk(q0.id) && api.statusOf(q0.id) === 'ok', '初正解で status=ok（正解）');
+assert(api.isAttempted(q0.id), '挑戦済み');
 const pracLog = api.store.logs.find(l => l.source === 'practice' && l.part === 'am');
 assert(pracLog && pracLog.total === 1 && pracLog.correct === 1, '演習が学習ログに自動連携');
-console.log('OK 演習: 正解 → 習熟更新＋学習ログ自動連携');
+console.log('OK 演習: 未挑戦→正解 で status=ok＋学習ログ自動連携');
 
-// 6) 不正解 → 弱点入り → 連続2回正解で克服
+// 6) 不正解 → 弱点入り → 復習で連続2回正解すると「正解」に戻る（克服ラベルなし）
 api.nextQuiz();
 const q1 = api.BANK_BY_ID[api.state.practice.queue[api.state.practice.idx]];
 const wrong = ['ア', 'イ', 'ウ', 'エ'].find(k => k !== q1.answer);
 api.answerQuiz(wrong);       // 不正解
-assert(api.isWeak(q1.id), '不正解で弱点入り');
-assert(!api.isMastered(q1.id), 'まだ克服していない');
-// 復習で2回正解
+assert(api.isWeak(q1.id) && api.statusOf(q1.id) === 'weak', '不正解で弱点入り');
+assert(!api.isOk(q1.id), 'まだ正解ではない');
 api.applyResult(q1.id, true);
 assert(api.isWeak(q1.id), '1回正解ではまだ弱点');
 api.applyResult(q1.id, true);
-assert(api.isMastered(q1.id) && !api.isWeak(q1.id), '連続2回正解で克服');
-console.log('OK 弱点リスト: 不正解→弱点→連続2回正解で克服');
+assert(api.isOk(q1.id) && !api.isWeak(q1.id), '連続2回正解で status=ok（正解）へ');
+console.log('OK 弱点→復習で連続2回正解→正解ステータスへ復帰');
 
 // 7) 復習モードは弱点のみを対象にする
 api.resetProgress();
@@ -143,12 +142,65 @@ const sHtml = elements.main.innerHTML;
 assert(sHtml.includes('解説はAI') && sHtml.includes('IPA'), '設定に免責＋出典');
 console.log('OK 設定画面: AI解説免責＋IPA出典明記');
 
-// 11) 永続化 & 移行（v1データからnotes削除・v2化）
-lsData['apstudy.v1'] = JSON.stringify({ version: 1, examDate: '2026-10-28', examName: 'x', logs: [{ date: '2026-07-01', part: 'am', total: 5, correct: 3 }], notes: [{ id: 'n1' }] });
+// 11) 移行: v1/v2データ（旧習熟スキーマ）→ v3（notes廃止・status化・source補完）
+lsData['apstudy.v1'] = JSON.stringify({
+  version: 2, examDate: '2026-10-28', examName: 'x',
+  logs: [{ date: '2026-07-01', part: 'am', total: 5, correct: 3 }],
+  mastery: {
+    'r6a-q4': { seen: 3, correctStreak: 2, wrong: true },   // 旧「克服」→ ok
+    'r6a-q6': { seen: 1, correctStreak: 0, wrong: true },   // 旧「弱点」→ weak
+    'r6a-q7': { seen: 2, correctStreak: 0, wrong: false }   // seenのみ → ok
+  },
+  notes: [{ id: 'n1' }]
+});
 api = boot();
-assert.strictEqual(api.store.version, 2, 'v2へ移行');
+assert.strictEqual(api.store.version, 3, 'v3へ移行');
 assert(!('notes' in api.store), '旧notes削除');
 assert.strictEqual(api.store.logs[0].source, 'manual', 'source補完');
-console.log('OK 永続化・v1→v2移行（notes廃止・source補完）');
+assert.strictEqual(api.statusOf('r6a-q4'), 'ok', '旧克服→正解');
+assert.strictEqual(api.statusOf('r6a-q6'), 'weak', '旧弱点→弱点');
+assert.strictEqual(api.statusOf('r6a-q7'), 'ok', 'seenのみ→正解');
+console.log('OK 移行 v2→v3（notes廃止・習熟スキーマ変換・source補完）');
 
-console.log('\n=== 全11項目 PASS ===');
+// 12) 「わからない」= 不正解扱い（弱点行き・正答率も不正解計上）＋結果画面表示
+api.resetProgress();
+api.pickExam('6_aki'); api.startPractice('year'); api.go('practice');
+const qu = api.BANK_BY_ID[api.state.practice.queue[0]];
+const pB = api.store.logs.find(l => l.source === 'practice' && l.part === qu.part && l.date === api.todayISO()) || { total: 0, correct: 0 };
+const tB = pB.total, cB = pB.correct;
+api.answerQuiz(api.UNKNOWN);
+assert.strictEqual(api.state.practice.picked, api.UNKNOWN, '「わからない」が選択として記録');
+assert(api.isWeak(qu.id), '「わからない」は弱点入り');
+const pA = api.store.logs.find(l => l.source === 'practice' && l.part === qu.part && l.date === api.todayISO());
+assert(pA.total === tB + 1 && pA.correct === cB, '正答率は不正解計上（totalのみ+1）');
+assert(elements.main.innerHTML.includes('わからない'), '選択肢にわからないが表示される');
+assert(elements.main.innerHTML.includes('正解:') && elements.main.innerHTML.includes('解説'), '結果画面に正解＋解説');
+console.log('OK 「わからない」=不正解扱い（弱点・不正解計上）＋正解/解説表示');
+
+// 13) 中断・再開: セッションがlocalStorageに保存され、再起動後に続きから
+api.resetProgress();
+api.pickExam('6_aki'); api.startPractice('year');
+api.answerQuiz(api.BANK_BY_ID[api.state.practice.queue[0]].answer);
+api.nextQuiz();                          // idx=1 まで進める
+assert(api.validSession() && api.store.session.idx === 1, 'セッションが保存されidx=1');
+api = boot();                            // アプリ再起動をシミュレート
+assert(api.validSession() && api.store.session.idx === 1, '再起動後もセッション永続');
+api.go('practice');
+assert(elements.main.innerHTML.includes('前回の続きから'), '演習トップに再開ボタン');
+api.resumeSession();
+assert(api.state.practice && api.state.practice.idx === 1, '中断した問題から再開');
+console.log('OK 中断・再開: セッション永続化→続きから再開');
+
+// 14) 年度別進捗の集計＋UI
+api.resetProgress();
+api.pickExam('6_aki'); api.startPractice('year');
+const cur = () => api.BANK_BY_ID[api.state.practice.queue[api.state.practice.idx]];
+let cx = cur(); api.answerQuiz(cx.answer); api.nextQuiz();                                   // 正解1
+let cy = cur(); api.answerQuiz(['ア', 'イ', 'ウ', 'エ'].find(k => k !== cy.answer)); api.nextQuiz(); // 弱点1
+const pr = api.examProgress(6, 'aki');
+assert(pr.included === api.BANK.length && pr.correct === 1 && pr.weak === 1 && pr.attempted === 2, '進捗集計: 正解1/弱点1/挑戦2');
+api.endPractice(); api.go('practice');
+assert(elements.main.innerHTML.includes('年度別の進捗') && elements.main.innerHTML.includes('pbar'), '進捗バーUI表示');
+console.log('OK 年度別進捗: 集計＋プログレスバー表示');
+
+console.log('\n=== 全14項目 PASS ===');

@@ -241,6 +241,19 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .ansline b { color: var(--ink-1); font-size: 16px; }
 .masterpill { display:inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
 .masterpill.weak { background: var(--danger-bg); color: var(--danger); }
+.masterpill.ok { background: var(--good-bg); color: var(--good); }
+/* 「わからない」選択肢: ア〜エと区別する破線・控えめ配色 */
+.choice.unknown { border-style: dashed; color: var(--muted); background: transparent; justify-content: center; }
+.choice.unknown .k { width: auto; }
+/* 年度別プログレスバー */
+.exrow { padding: 8px 0; border-top: 1px solid var(--grid); }
+.exrow:first-child { border-top: none; }
+.exrow-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+.exrow-h .exn { font-weight: 600; font-size: 14px; }
+.exrow-h .exc { font-size: 11px; color: var(--muted); }
+.pbar { display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
+.pbar .pb-ok { background: var(--good); }
+.pbar .pb-weak { background: var(--danger); }
 .expl { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; margin: 10px 0; font-size: 14px; line-height: 1.8; }
 .expl-h { font-weight: 700; font-size: 12px; color: var(--accent); margin-bottom: 4px; }
 .expl-ai { font-size: 11px; color: var(--muted); margin-top: 8px; }
@@ -294,7 +307,7 @@ const BANK_META = {
 };
 const BANK_BY_ID = {};
 BANK.forEach(q => { BANK_BY_ID[q.id] = q; });
-const MASTER_STREAK = 2;   // 連続正解で克服
+const RESOLVE_STREAK = 2;  // 弱点を復習で連続この回数正解すると「正解」ステータスへ戻す
 
 /* ============ 永続化 ============ */
 const LS_KEY = 'apstudy.v1';
@@ -302,7 +315,7 @@ const DEFAULT_EXAM_DATE = '2026-10-28';           // 令和8年度 前期試験 
 const DEFAULT_EXAM_NAME = '応用情報 前期(科目A)';
 
 function defaultStore() {
-  return { version: 2, examDate: DEFAULT_EXAM_DATE, examName: DEFAULT_EXAM_NAME, logs: [], mastery: {}, qmemo: {} };
+  return { version: 3, examDate: DEFAULT_EXAM_DATE, examName: DEFAULT_EXAM_NAME, logs: [], mastery: {}, qmemo: {}, session: null };
 }
 let store = loadStore();
 function loadStore() {
@@ -320,6 +333,7 @@ function migrate(s) {
   if (!Array.isArray(s.logs)) s.logs = [];
   if (!s.mastery || typeof s.mastery !== 'object') s.mastery = {};
   if (!s.qmemo || typeof s.qmemo !== 'object') s.qmemo = {};
+  if (!('session' in s)) s.session = null;
   delete s.notes;                 // v1のノート機能は廃止
   s.logs.forEach(l => {
     l.total = Math.max(0, Number(l.total) || 0);
@@ -329,7 +343,16 @@ function migrate(s) {
     if (l.source !== 'practice') l.source = 'manual';
     if (!l.id) l.id = uid();
   });
-  s.version = 2;
+  // 習熟スキーマ v2→v3 移行: { seen, correctStreak, wrong } → { status:'ok'|'weak', correctStreak }
+  //   旧「克服(wrong && streak>=2)」＝正解ステータスへ、旧「弱点」＝weak、旧「seenのみ(never wrong)」＝正解
+  for (const qid in s.mastery) {
+    const m = s.mastery[qid];
+    if (m && !('status' in m)) {
+      const wasWeakUnresolved = m.wrong && (m.correctStreak || 0) < RESOLVE_STREAK;
+      s.mastery[qid] = { status: wasWeakUnresolved ? 'weak' : 'ok', correctStreak: m.correctStreak || 0 };
+    }
+  }
+  s.version = 3;
   persist(s);
   return s;
 }
@@ -392,17 +415,31 @@ function recordPracticeAnswer(part, isCorrect) {
   log.total += 1; if (isCorrect) log.correct += 1;
 }
 
-/* ============ 習熟・弱点 ============ */
-function masteryOf(qid) { return store.mastery[qid] || { seen: 0, correctStreak: 0, wrong: false }; }
-function isWeak(qid) { const m = store.mastery[qid]; return !!(m && m.wrong && m.correctStreak < MASTER_STREAK); }
-function isMastered(qid) { const m = store.mastery[qid]; return !!(m && m.wrong && m.correctStreak >= MASTER_STREAK); }
+/* ============ 習熟ステータス（未挑戦／正解／弱点） ============ */
+// statusOf: '未挑戦'（記録なし）／'ok'（正解）／'weak'（弱点）
+function statusOf(qid) { const m = store.mastery[qid]; return m ? m.status : '未挑戦'; }
+function isAttempted(qid) { return !!store.mastery[qid]; }      // 挑戦済み = 正解 + 弱点
+function isWeak(qid) { const m = store.mastery[qid]; return !!(m && m.status === 'weak'); }
+function isOk(qid) { const m = store.mastery[qid]; return !!(m && m.status === 'ok'); }
 function weakList() { return BANK.filter(q => isWeak(q.id)); }
 function applyResult(qid, isCorrect) {
-  const m = masteryOf(qid);
-  m.seen += 1;
-  if (isCorrect) m.correctStreak += 1;
-  else { m.correctStreak = 0; m.wrong = true; }
+  let m = store.mastery[qid];
+  if (!m) m = { status: isCorrect ? 'ok' : 'weak', correctStreak: 0 };
+  if (isCorrect) {
+    m.correctStreak = (m.correctStreak || 0) + 1;
+    // 未挑戦→初正解は即「正解」。弱点は連続RESOLVE_STREAK回正解で「正解」へ戻す（「克服」ラベルは設けない）
+    if (m.status !== 'weak' || m.correctStreak >= RESOLVE_STREAK) { m.status = 'ok'; m.correctStreak = 0; }
+  } else {
+    m.status = 'weak'; m.correctStreak = 0;
+  }
   store.mastery[qid] = m;
+}
+// 回ごとの進捗集計: { included, attempted, correct, weak }
+function examProgress(year, term) {
+  const qs = BANK.filter(q => q.year === year && q.term === term);
+  let correct = 0, weak = 0;
+  qs.forEach(q => { if (isOk(q.id)) correct++; else if (isWeak(q.id)) weak++; });
+  return { included: qs.length, attempted: correct + weak, correct, weak };
 }
 
 /* ============ 状態 ============ */
@@ -648,6 +685,33 @@ function dojoUrl(q) {
     : `https://www.ap-siken.com/kakomon/${dir}/pm${String(q.qnum).padStart(2, '0')}.html`;
 }
 
+const UNKNOWN = '?';   // 「わからない」の内部値
+// 進捗バー（正解=緑・弱点=赤・未挑戦=灰）
+function progressBarHtml(pr) {
+  const okPct = pr.included ? pr.correct / pr.included * 100 : 0;
+  const weakPct = pr.included ? pr.weak / pr.included * 100 : 0;
+  return `<div class="pbar"><span class="pb-ok" style="width:${okPct}%"></span><span class="pb-weak" style="width:${weakPct}%"></span></div>`;
+}
+function examProgressHtml() {
+  return BANK_META.exams.map(e => {
+    const pr = examProgress(e.year, e.term);
+    return `<div class="exrow">
+      <div class="exrow-h"><span class="exn">${esc(e.label)}</span>
+        <span class="exc num">収録${pr.included}問中 挑戦${pr.attempted}・<b style="color:var(--good)">正解${pr.correct}</b>・<b style="color:var(--danger)">弱点${pr.weak}</b></span></div>
+      ${progressBarHtml(pr)}</div>`;
+  }).join('');
+}
+// 中断セッションが有効か（キューの問題が現バンクに存在し、まだ残りがある）
+function validSession() {
+  const s = store.session;
+  return !!(s && Array.isArray(s.queue) && s.queue.length && s.idx < s.queue.length && s.queue.every(id => BANK_BY_ID[id]));
+}
+function persistSession() {
+  const p = state.practice;
+  store.session = (p && p.idx < p.queue.length) ? { mode: p.mode, label: p.label, queue: p.queue, idx: p.idx, picked: p.picked } : null;
+  save();
+}
+
 function viewPractice() {
   if (!BANK.length) {
     return `<h1>過去問演習</h1><div class="card"><div class="empty">問題データが読み込めませんでした。<br>オンラインで開き直してください。</div></div>`;
@@ -655,8 +719,17 @@ function viewPractice() {
   if (state.practice) return viewQuiz();
   // モード選択
   const weak = weakList().length;
-  const masteredN = BANK.filter(q => isMastered(q.id)).length;
-  const seenN = BANK.filter(q => store.mastery[q.id]).length;
+  const okN = BANK.filter(q => isOk(q.id)).length;
+  const attemptedN = BANK.filter(q => isAttempted(q.id)).length;
+
+  // 中断からの再開
+  let resume = '';
+  if (validSession()) {
+    const s = store.session;
+    resume = `<button class="mode-btn accent" onclick="resumeSession()">
+      <div class="t">▶ 前回の続きから（${s.idx + 1}問目〜）</div>
+      <div class="s">${esc(s.label)}・${s.queue.length}問中 ${s.idx + 1}問目から再開</div></button>`;
+  }
 
   const examOpts = BANK_META.exams.map(e =>
     `<option value="${e.year}_${e.term}" ${state.pickYear === e.year && state.pickTerm === e.term ? 'selected' : ''}>${esc(e.label)}（${e.included}問）</option>`).join('');
@@ -670,16 +743,17 @@ function viewPractice() {
     </div>
     <button class="mode-btn" onclick="startPractice('review')" ${weak ? '' : 'disabled'}>
       <div class="t">🔁 復習モード ${weak ? `（${weak}問）` : ''}</div>
-      <div class="s">${weak ? '間違えた問題だけを再出題。連続2回正解で克服。' : '間違えた問題はまだありません'}</div></button>`;
+      <div class="s">${weak ? '弱点の問題だけを再出題。連続2回正解で「正解」に戻ります。' : '弱点の問題はまだありません'}</div></button>`;
 
   const stats = `<h2>習熟状況</h2><div class="statgrid">
-    <div class="kpi"><div class="v">${seenN}<small>問</small></div><div class="l">挑戦済み</div></div>
-    <div class="kpi"><div class="v" style="color:var(--danger)">${weak}<small>問</small></div><div class="l">弱点（復習対象）</div></div>
-    <div class="kpi"><div class="v" style="color:var(--good)">${masteredN}<small>問</small></div><div class="l">克服</div></div>
+    <div class="kpi"><div class="v">${attemptedN}<small>問</small></div><div class="l">挑戦済み</div></div>
+    <div class="kpi"><div class="v" style="color:var(--good)">${okN}<small>問</small></div><div class="l">正解</div></div>
+    <div class="kpi"><div class="v" style="color:var(--danger)">${weak}<small>問</small></div><div class="l">弱点</div></div>
   </div>
-  <div class="hint">解答は自動で学習ログ・グラフに記録されます。<br>${esc(BANK_META.source || '出典: 情報処理推進機構(IPA) 過去問題')}</div>`;
+  <h2>年度別の進捗</h2><div class="card">${examProgressHtml()}</div>
+  <div class="hint">解答は自動で学習ログ・グラフに記録されます。「わからない」も不正解として弱点に入ります。<br>${esc(BANK_META.source || '出典: 情報処理推進機構(IPA) 過去問題')}</div>`;
 
-  return `<h1>過去問演習</h1>${menu}${stats}`;
+  return `<h1>過去問演習</h1>${resume}${menu}${stats}`;
 }
 function pickExam(v) { const [y, t] = v.split('_'); state.pickYear = Number(y); state.pickTerm = t; }
 function startPractice(mode) {
@@ -692,6 +766,13 @@ function startPractice(mode) {
   } else { qs = shuffle(weakList()); label = '復習モード'; }
   if (!qs.length) { toast('対象の問題がありません'); return; }
   state.practice = { mode, label, queue: qs.map(q => q.id), idx: 0, picked: null };
+  persistSession();
+  render();
+}
+function resumeSession() {
+  if (!validSession()) { toast('再開できるセッションがありません'); render(); return; }
+  const s = store.session;
+  state.practice = { mode: s.mode, label: s.label, queue: s.queue.slice(), idx: s.idx, picked: s.picked || null };
   render();
 }
 function viewQuiz() {
@@ -705,13 +786,13 @@ function viewQuiz() {
   const q = BANK_BY_ID[p.queue[p.idx]];
   const memo = store.qmemo[q.id] || '';
   const answered = p.picked != null;
-  const weakPill = isMastered(q.id) ? '<span class="masterpill">克服済</span>' : (isWeak(q.id) ? '<span class="masterpill weak">弱点</span>' : '');
+  const stPill = isOk(q.id) ? '<span class="masterpill ok">正解</span>' : (isWeak(q.id) ? '<span class="masterpill weak">弱点</span>' : '');
 
-  const meta = `<div class="qmeta"><span class="prog">${p.idx + 1} / ${p.queue.length}</span>${weakPill}</div>
+  const meta = `<div class="qmeta"><span class="prog">${p.idx + 1} / ${p.queue.length}</span>${stPill}</div>
     <div class="qmeta"><span class="src">${esc(qSource(q))}</span></div>`;
 
   const keys = ['ア', 'イ', 'ウ', 'エ'];
-  const choices = keys.map(k => {
+  let choices = keys.map(k => {
     let cls = 'choice';
     if (answered) {
       if (k === q.answer) cls += ' correct';
@@ -721,6 +802,11 @@ function viewQuiz() {
     const oc = answered ? '' : `onclick="answerQuiz('${k}')"`;
     return `<button class="${cls}" ${oc}><span class="k">${k}</span><span>${esc(q.choices[k] || '')}</span></button>`;
   }).join('');
+  // 5番目の「わからない」（ア〜エと区別できるスタイル）。選択＝不正解扱い。
+  let ukCls = 'choice unknown';
+  if (answered) ukCls += (p.picked === UNKNOWN) ? ' wrong' : ' dim';
+  const ukOc = answered ? '' : `onclick="answerQuiz('${UNKNOWN}')"`;
+  choices += `<button class="${ukCls}" ${ukOc}><span class="k">?</span><span>わからない</span></button>`;
 
   let after = '';
   if (answered) {
@@ -737,20 +823,28 @@ function viewQuiz() {
 
   return `<div style="display:flex;align-items:center;gap:8px;padding:10px 2px">
       <button onclick="endPractice()" style="padding:6px 10px">‹ 中断</button>
-      <div style="font-weight:700">${esc(p.label)}</div></div>
+      <div style="font-weight:700">${esc(p.label)}</div>
+      <div style="margin-left:auto;font-size:11px;color:var(--muted)">中断しても続きから再開できます</div></div>
     <div class="card">${meta}<div class="qtext">${esc(q.text)}</div>${choices}${after}</div>`;
 }
 function answerQuiz(k) {
   const p = state.practice; if (!p || p.picked != null) return;
   const q = BANK_BY_ID[p.queue[p.idx]];
   p.picked = k;
-  const ok = k === q.answer;
+  const ok = k === q.answer;   // 「わからない」(UNKNOWN)は正解と一致しない＝不正解
   applyResult(q.id, ok);
   recordPracticeAnswer(q.part, ok);
-  save(); render();
+  persistSession();
+  render();
 }
-function nextQuiz() { const p = state.practice; if (!p) return; p.idx++; p.picked = null; render(); const m = document.getElementById('main'); if (m) m.scrollTo(0, 0); }
+function nextQuiz() {
+  const p = state.practice; if (!p) return;
+  p.idx++; p.picked = null;
+  persistSession();            // 完了したら store.session は null になる
+  render(); const m = document.getElementById('main'); if (m) m.scrollTo(0, 0);
+}
 function setQMemo(qid, v) { const t = (v || '').trim(); if (t) store.qmemo[qid] = t; else delete store.qmemo[qid]; save(); }
+// 中断: 演習ビューを閉じるが store.session は残す（再開可能）
 function endPractice() { state.practice = null; render(); }
 
 /* ---- 設定 ---- */
@@ -758,7 +852,7 @@ function viewSettings() {
   const total = store.logs.reduce((s, l) => s + l.total, 0);
   const correct = store.logs.reduce((s, l) => s + l.correct, 0);
   const dleft = daysUntilExam();
-  const weak = weakList().length, mastered = BANK.filter(q => isMastered(q.id)).length;
+  const weak = weakList().length, okN = BANK.filter(q => isOk(q.id)).length, attemptedN = BANK.filter(q => isAttempted(q.id)).length;
   return `<h1>設定</h1>
   <h2>試験日</h2>
   <div class="card">
@@ -772,11 +866,11 @@ function viewSettings() {
     <div class="settings-row"><span>通算学習日数</span><b class="num" style="margin-left:auto">${logDates().length} 日</b></div>
     <div class="settings-row"><span>連続学習日数</span><b class="num" style="margin-left:auto">🔥 ${currentStreak()} 日</b></div>
     <div class="settings-row"><span>累計 解答数</span><b class="num" style="margin-left:auto">${correct} / ${total} 問</b></div>
-    <div class="settings-row"><span>演習 弱点 / 克服</span><b class="num" style="margin-left:auto">${weak} / ${mastered} 問</b></div>
+    <div class="settings-row"><span>演習 挑戦済み / 正解 / 弱点</span><b class="num" style="margin-left:auto">${attemptedN} / ${okN} / ${weak} 問</b></div>
   </div>
-  <h2>収録している過去問</h2>
+  <h2>収録している過去問（年度別の進捗）</h2>
   <div class="card">
-    ${BANK_META.exams.map(e => `<div class="settings-row"><span>${esc(e.label)}</span><b class="num" style="margin-left:auto">${e.included} 問</b></div>`).join('') || '<div class="empty">なし</div>'}
+    ${examProgressHtml() || '<div class="empty">なし</div>'}
     <div class="muted-note">${esc(BANK_META.source || '')}<br>問題文・選択肢・正解はIPA公開の過去問題／解答例に基づきます（出典明記を条件にIPAが再利用を許諾）。<br>図表・プログラムを含む問題はv1では収録していません。<br><b>解説はAIが生成したものであり、誤りを含む可能性があります。</b>最終確認は公式解答例や過去問道場でお願いします。</div>
   </div>
   <h2>データ管理</h2>
@@ -794,7 +888,7 @@ function viewSettings() {
 function setExamDate(v) { if (v) { store.examDate = v; save(); render(); } }
 function setExamName(v) { store.examName = (v || '').trim() || DEFAULT_EXAM_NAME; save(); render(); }
 function resetExam() { store.examDate = DEFAULT_EXAM_DATE; store.examName = DEFAULT_EXAM_NAME; save(); render(); toast('既定の試験日に戻しました'); }
-function resetProgress() { if (!confirm('演習の習熟・弱点データを消去します。学習ログは残ります。よろしいですか？')) return; store.mastery = {}; store.qmemo = {}; save(); render(); toast('習熟データをリセットしました'); }
+function resetProgress() { if (!confirm('演習の習熟（正解／弱点）・メモ・中断セッションを消去します。学習ログは残ります。よろしいですか？')) return; store.mastery = {}; store.qmemo = {}; store.session = null; state.practice = null; save(); render(); toast('習熟データをリセットしました'); }
 function exportData() {
   const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -853,8 +947,8 @@ if (typeof module !== 'undefined' && module.exports) {
     go, render, startAdd, formSet, saveForm, delLog, currentStreak, weekCount, weekCountFn: weekCount,
     accuracySeries, partAgg, buildChart, logDates, recordPracticeAnswer,
     calSelect, startAddCal, calMove,
-    masteryOf, isWeak, isMastered, weakList, applyResult,
-    startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl,
+    statusOf, isAttempted, isWeak, isOk, weakList, applyResult, examProgress, validSession, persistSession, resumeSession,
+    startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl, UNKNOWN,
     setExamDate, setExamName, resetExam, resetProgress, daysUntilExam, daysBetween, todayISO, addDays,
     BANK, BANK_META, BANK_BY_ID, _ls: LS_KEY,
   };
