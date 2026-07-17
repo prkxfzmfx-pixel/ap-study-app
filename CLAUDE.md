@@ -25,11 +25,20 @@
 1. **正解は必ずIPA公式「解答例」PDF由来**とする。問題を追加・編集したら `python tools/verify.py` を実行し、収録全問の `answer` が `data/answers.json`（＝IPA解答例）と一致することを確認する。手打ちで正解を書かない。
 2. **解説（explanation）はAI生成**であり誤りうる。結果画面と設定画面下部の「AI生成である」旨の注記を消さない。解説を追加・修正したら、結論（推す肢）が `answer` と矛盾しないか必ず読み返す。
 3. **出典明記を消さない**。IPAは出典明記を条件に問題の再利用を認めている。結果画面の出典表示・設定画面・READMEのIPA出典を維持する。
-4. **問題冊子PDFは全ページ画像**（テキスト非埋め込み）。設問文・選択肢は自動抽出できないので、`data/img/<key>/pNN.png` を目視して書き起こす。図・表・プログラムを含む問題は `hasImage:true` にせず**収録しない**（v1方針）。
+4. **問題冊子PDFは全ページ画像**（テキスト非埋め込み）。設問文・選択肢は自動抽出できないので、`data/img/<key>/pNN.png` を目視して書き起こす。**図表を含む問題は `tools/crop_fig.py` で該当図を切り出し（`questions/img/<qid>.png`）、問題データに `"hasImage": true, "img": "questions/img/<qid>.png"` を付けて表示できる**（アプリの `.qimg` 対応済み・`verify.py` が img ファイル存在を検証）。切り出しが困難な問題（選択肢自体が図など）のみ収録を見送り、報告する。
 5. データ本体はユーザー端末のlocalStorage（キー `apstudy.v1`）。保存構造を変えるときは `migrate()` に旧→新変換を追加し、テストに移行ケースを足す。既存データを壊すと復元不能。
 6. レイアウトの根幹を壊さない: `fitViewport()`、body/main/navのflex構造、セーフエリア対応。**`position: fixed` や新規の `100vh/100dvh` を使わない**（iOSスタンドアロンで高さがバグる）。
 7. グラフ色は検証済みパレット（午前=blue #2a78d6 / 午後=orange #eb6834、ダーク別調整）。合格ライン60%の破線を維持。色を足すときは凡例・ラベルを必ず併記。
 8. 新しいファイルを追加したら `sw.js` の `ASSETS` に追記し、`CACHE` 名の数字を+1する（apstudy-v2 → v3）。
+
+## 🔖 次回の再開メモ（5年度分・約10回への収録拡充：作業途中）
+
+- **目標**: 令和3〜7年度の午前 約10回（各80問）を収録。`tools/exams.json` に10回分のIPA PDF URL登録済み。**新しい回から順**（r7a→r7h→r6a残り→r6h→r5a→r5h→r4a→r3a→r3h）。r4h（令和4春）は解答例PDFがベクター化で抽出不可のため除外。
+- **現在の収録**: `questions/manifest.js` は **r6a（令和6年秋・14問／全問解説あり／図表なし）のみ**。これが唯一アプリに出る完成データ。
+- **答えは9回分検証済み**: `data/answers.json` に r7a,r7h,r6a,r6h,r5a,r5h,r4a,r3a,r3h（各80問）を抽出済み。`tools/verify.py` で連番・ア〜エ・収録問との一致を検証済み。
+- **画像対応は実装完了**: 図表つき問題は `img` フィールド＋`.qimg`表示＋`crop_fig.py`切り出し＋`verify.py`のimg存在チェックまで通る。R6秋の図表問題（例: 問5=2分探索木, 問14=信頼性ブロック図）も今後この方式で追加できる。
+- **再開はここから**: `python tools/build_exam.py r7a`（実行済み・`data/img/r7a/pNN.png` 生成済み）→ `data/img/r7a/pNN.png` を目視で `questions/r7a.js`（`AP_REGISTER`）へ書き起こし。図表問題は `crop_fig.py r7a <page> <fx0> <fy0> <fx1> <fy1> r7a-qN`。正解は `data/answers.json` の r7a を使用。解説は「正解肢2〜3文＋誤答肢各1文」。書けたら manifest に r7a 追加＋sw.js の ASSETS に `questions/r7a.js`（＋使う画像）追加＋CACHE+1 → `verify.py`＆テスト → **1回完成ごとにコミット・push・配信確認**。
+- **重い場合**: 「問題＋正解だけ先に（解説なし＝正解表示のみで解ける挙動は実装済み）」で公開し、解説は後続バッチで。
 
 ## 過去問の回を追加する手順
 

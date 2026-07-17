@@ -219,6 +219,8 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .qmeta .src { font-size: 11px; color: var(--muted); }
 .qmeta .prog { font-size: 12px; color: var(--accent); font-weight: 700; }
 .qtext { font-size: 16px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; margin-bottom: 14px; }
+/* 図表画像（PDFから切り出し）。図は黒線on白なので背景を白固定にしてダークでも視認できるようにする */
+.qimg { max-width: 100%; height: auto; display: block; margin: 0 auto 14px; background: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--border); }
 .choice {
   display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left;
   padding: 12px; margin-bottom: 8px; border-radius: 12px; line-height: 1.6;
@@ -785,7 +787,7 @@ function viewQuiz() {
       <button onclick="endPractice()" style="padding:6px 10px">‹ 中断</button>
       <div style="font-weight:700">${esc(p.label)}</div>
       <div style="margin-left:auto;font-size:11px;color:var(--muted)">中断しても続きから再開できます</div></div>
-    <div class="card">${meta}<div class="qtext">${esc(q.text)}</div>${choices}${after}</div>`;
+    <div class="card">${meta}<div class="qtext">${esc(q.text)}</div>${q.img ? `<img class="qimg" src="${esc(q.img)}" alt="図表" loading="lazy">` : ''}${choices}${after}</div>`;
 }
 function answerQuiz(k) {
   const p = state.practice; if (!p || p.picked != null) return;

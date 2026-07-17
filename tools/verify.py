@@ -85,8 +85,13 @@ def check_banks(ans, banks):
         seen = set()
         for q in b['qs']:
             qid = q.get('id')
-            if q.get('hasImage'):
-                errors.append(f'[B] {qid}: hasImage=true は収録対象外')
+            # 図表つき問題は img（切り出し画像）が必須。画像なしのhasImageは収録不可。
+            if q.get('hasImage') and not q.get('img'):
+                errors.append(f'[B] {qid}: hasImage=true だが img（切り出し画像）がない（図表なしで収録できないならスキップ）')
+            if q.get('img'):
+                p = os.path.join(ROOT, q['img'])
+                if not os.path.exists(p):
+                    errors.append(f'[B] {qid}: img ファイルが存在しない: {q["img"]}')
             qn = str(q.get('qnum'))
             if qn in seen:
                 errors.append(f'[B] {key}: 問{qn} が重複')

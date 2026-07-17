@@ -1,7 +1,13 @@
 {
-  "_note": "収録候補の回とIPA公式PDFのURL。回を追加するときはここに1行足して build_exam.py を回す。a=秋(aki), h=春(haru)。",
+  "_note": "収録候補の回とIPA公式PDFのURL。回を追加するときはここに1行足して build_exam.py を回す。a=秋(aki), h=春(haru)。新しい回から順に収録する。",
   "source": "独立行政法人情報処理推進機構(IPA) 過去問題・解答例",
   "exams": [
+    { "key": "r7a", "year": 7, "term": "aki",  "label": "令和7年秋",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/nl10bi0000009lh8-att/2025r07a_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/nl10bi0000009lh8-att/2025r07a_ap_am_ans.pdf" },
+    { "key": "r7h", "year": 7, "term": "haru", "label": "令和7年春",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/nl10bi0000009lh8-att/2025r07h_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/nl10bi0000009lh8-att/2025r07h_ap_am_ans.pdf" },
     { "key": "r6a", "year": 6, "term": "aki",  "label": "令和6年秋",
       "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/m42obm000000afqx-att/2024r06a_ap_am_qs.pdf",
       "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/m42obm000000afqx-att/2024r06a_ap_am_ans.pdf" },
@@ -19,6 +25,12 @@
       "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000008smf-att/2022r04a_ap_am_ans.pdf" },
     { "key": "r4h", "year": 4, "term": "haru", "label": "令和4年春",
       "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000009sgk-att/2022r04h_ap_am_qs.pdf",
-      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000009sgk-att/2022r04h_ap_am_ans.pdf" }
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000009sgk-att/2022r04h_ap_am_ans.pdf" },
+    { "key": "r3a", "year": 3, "term": "aki",  "label": "令和3年秋",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000apad-att/2021r03a_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000apad-att/2021r03a_ap_am_ans.pdf" },
+    { "key": "r3h", "year": 3, "term": "haru", "label": "令和3年春",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000d5ru-att/2021r03h_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000d5ru-att/2021r03h_ap_am_ans.pdf" }
   ]
 }
