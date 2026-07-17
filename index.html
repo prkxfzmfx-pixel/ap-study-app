@@ -208,13 +208,6 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .cal-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--ink-2); align-items: center; justify-content: center; }
 .cal-legend span { display: flex; align-items: center; gap: 5px; }
 
-/* グラフ */
-.legend { display: flex; gap: 16px; margin: 2px 0 6px; font-size: 12px; color: var(--ink-2); align-items: center; flex-wrap: wrap; }
-.legend span { display: flex; align-items: center; gap: 6px; }
-.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
-.legend i.pass { height: 0; border-top: 2px dashed var(--pass-line); background: none; }
-.chartwrap { position: relative; }
-
 /* 演習（過去問） */
 .mode-btn { display: block; width: 100%; text-align: left; padding: 14px; margin-bottom: 10px; border-radius: 14px; }
 .mode-btn .t { font-size: 16px; font-weight: 700; }
@@ -254,6 +247,12 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .pbar { display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
 .pbar .pb-ok { background: var(--good); }
 .pbar .pb-weak { background: var(--danger); }
+.exrow.tap { cursor: pointer; margin: 0 -6px; padding: 8px 6px; border-radius: 8px; }
+.exrow.tap:active { background: var(--surface-2); }
+.tapmark { color: var(--accent); font-size: 12px; }
+.exgo-row { margin-top: 5px; text-align: right; }
+.exgo { font-size: 11px; font-weight: 700; color: var(--accent); }
+.exgo.none { color: var(--muted); font-weight: 500; }
 .expl { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; margin: 10px 0; font-size: 14px; line-height: 1.8; }
 .expl-h { font-weight: 700; font-size: 12px; color: var(--accent); margin-bottom: 4px; }
 .expl-ai { font-size: 11px; color: var(--muted); margin-top: 8px; }
@@ -396,18 +395,7 @@ function partAgg(part) {
   store.logs.forEach(l => { if (l.part === part) { t += l.total; c += l.correct; } });
   return { total: t, correct: c, rate: t ? c / t * 100 : null };
 }
-function accuracySeries(part) {
-  const byDate = {};
-  store.logs.forEach(l => {
-    if (l.part !== part) return;
-    if (!byDate[l.date]) byDate[l.date] = { total: 0, correct: 0 };
-    byDate[l.date].total += l.total; byDate[l.date].correct += l.correct;
-  });
-  return Object.keys(byDate).sort().map(date => ({
-    date, rate: byDate[date].total ? byDate[date].correct / byDate[date].total * 100 : null
-  })).filter(p => p.rate != null);
-}
-// 演習の解答を当日の practice ログに集計（グラフ・カレンダー・ストリークに自動連携）
+// 演習の解答を当日の practice ログに集計（カレンダー・ストリーク・サマリに自動連携）
 function recordPracticeAnswer(part, isCorrect) {
   const date = todayISO();
   let log = store.logs.find(l => l.date === date && l.part === part && l.source === 'practice');
@@ -459,7 +447,7 @@ function newForm(date) { return { date, part: 'am', total: '', correct: '', memo
 const TABS = [
   { id: 'home', ico: '🏠', name: 'ホーム' },
   { id: 'cal', ico: '📅', name: 'カレンダー' },
-  { id: 'chart', ico: '📈', name: 'グラフ' },
+  { id: 'summary', ico: '📊', name: '年度別' },
   { id: 'practice', ico: '✏️', name: '演習' },
   { id: 'settings', ico: '⚙️', name: '設定' },
 ];
@@ -478,7 +466,7 @@ function render() {
   let html = '';
   if (state.tab === 'home') html = viewHome();
   else if (state.tab === 'cal') html = viewCal();
-  else if (state.tab === 'chart') html = viewChart();
+  else if (state.tab === 'summary') html = viewSummary();
   else if (state.tab === 'practice') html = viewPractice();
   else if (state.tab === 'settings') html = viewSettings();
   main.innerHTML = html;
@@ -614,62 +602,27 @@ function dayDetailHtml(iso) {
 }
 function startAddCal(iso) { state.selDate = iso; state.form = newForm(iso); render(); }
 
-/* ---- グラフ ---- */
-function viewChart() {
-  const am = accuracySeries('am'), pm = accuracySeries('pm');
-  const amAgg = partAgg('am'), pmAgg = partAgg('pm');
-  let body;
-  if (am.length + pm.length === 0) {
-    body = `<div class="card"><div class="empty">記録が集まるとここに正答率の推移が表示されます。<br>「演習」タブや手動記録から始めましょう。</div></div>`;
-  } else {
-    const legend = `<div class="legend">
-      <span><i style="background:var(--series-am)"></i>午前</span>
-      <span><i style="background:var(--series-pm)"></i>午後</span>
-      <span><i class="pass"></i>合格ライン 60%</span></div>`;
-    body = `<div class="card">${legend}<div class="chartwrap">${buildChart(am, pm)}</div></div>`;
-  }
-  const stats = `<h2>累計サマリ</h2><div class="statgrid">
-    <div class="kpi"><div class="v" style="color:var(--series-am)">${amAgg.rate == null ? '—' : Math.round(amAgg.rate) + '<small>%</small>'}</div><div class="l">午前 ${amAgg.correct}/${amAgg.total}問</div></div>
-    <div class="kpi"><div class="v" style="color:var(--series-pm)">${pmAgg.rate == null ? '—' : Math.round(pmAgg.rate) + '<small>%</small>'}</div><div class="l">午後 ${pmAgg.correct}/${pmAgg.total}問</div></div>
-  </div><div class="hint" style="text-align:center">1日ごとの正答率（手動記録＋演習を合算）</div>`;
-  return `<h1>正答率の推移</h1>${body}${stats}`;
+/* ---- 年度別サマリ（旧グラフタブ） ---- */
+function viewSummary() {
+  const weak = weakList().length, okN = BANK.filter(q => isOk(q.id)).length, attemptedN = BANK.filter(q => isAttempted(q.id)).length;
+  const stats = `<div class="statgrid">
+    <div class="kpi"><div class="v">${attemptedN}<small>問</small></div><div class="l">挑戦済み</div></div>
+    <div class="kpi"><div class="v" style="color:var(--good)">${okN}<small>問</small></div><div class="l">正解</div></div>
+    <div class="kpi"><div class="v" style="color:var(--danger)">${weak}<small>問</small></div><div class="l">弱点</div></div>
+  </div>`;
+  const body = BANK.length
+    ? `<h2>年度別サマリ</h2><div class="card">${examSummaryHtml(true)}</div>
+       <div class="hint">弱点がある回をタップすると、その回の弱点だけを復習できます（緑=正解／赤=弱点、収録数に対する割合）。<br>${esc(BANK_META.source || '')}</div>`
+    : `<div class="card"><div class="empty">問題データが読み込めませんでした。<br>オンラインで開き直してください。</div></div>`;
+  return `<h1>年度別サマリ</h1>${stats}${body}`;
 }
-function buildChart(am, pm) {
-  const W = 600, H = 280, padL = 34, padR = 44, padT = 14, padB = 26;
-  const all = am.concat(pm);
-  const xs = all.map(p => isoToDate(p.date).getTime());
-  const x0 = Math.min(...xs), x1 = Math.max(...xs);
-  const X = t => x1 === x0 ? (padL + (W - padL - padR) / 2) : padL + (t - x0) / (x1 - x0) * (W - padL - padR);
-  const Y = v => padT + (100 - v) / 100 * (H - padT - padB);
-  let grid = '';
-  for (let g = 0; g <= 100; g += 20) {
-    const y = Y(g);
-    grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>
-      <text x="${padL - 5}" y="${y + 4}" text-anchor="end" font-size="10" fill="var(--muted)" style="font-variant-numeric:tabular-nums">${g}</text>`;
-  }
-  const y60 = Y(60);
-  const passLine = `<line x1="${padL}" y1="${y60}" x2="${W - padR}" y2="${y60}" stroke="var(--pass-line)" stroke-width="2" stroke-dasharray="6 5"/>
-    <text x="${W - padR + 3}" y="${y60 + 4}" font-size="10" fill="var(--pass-line)" font-weight="700">60%</text>`;
-  const dset = Array.from(new Set(all.map(p => p.date))).sort();
-  const xIdx = dset.length <= 1 ? dset : (dset.length === 2 ? [dset[0], dset[dset.length - 1]] : [dset[0], dset[Math.floor(dset.length / 2)], dset[dset.length - 1]]);
-  const lab = xIdx.map(iso => { const [, mm, dd] = iso.split('-').map(Number); return `<text x="${X(isoToDate(iso).getTime())}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${mm}/${dd}</text>`; }).join('');
-  const line = (pts, color, label) => {
-    if (!pts.length) return '';
-    const seq = pts.map(p => `${X(isoToDate(p.date).getTime())},${Y(p.rate)}`);
-    if (seq.length === 1) {
-      const [cx, cy] = seq[0].split(',');
-      return `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${color}"/><text x="${Number(cx) + 8}" y="${Number(cy) + 4}" font-size="11" font-weight="700" fill="${color}">${label}</text>`;
-    }
-    const dots = pts.map(p => `<circle cx="${X(isoToDate(p.date).getTime())}" cy="${Y(p.rate)}" r="3.5" fill="${color}" stroke="var(--surface-1)" stroke-width="2"/>`).join('');
-    const last = pts[pts.length - 1], lx = X(isoToDate(last.date).getTime()), ly = Y(last.rate);
-    const dl = `<text x="${Math.min(lx + 7, W - 4)}" y="${ly + 4}" font-size="11" font-weight="700" fill="${color}">${label}</text>`;
-    return `<polyline points="${seq.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${dl}`;
-  };
-  return `<svg id="chart" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;aspect-ratio:${W}/${H};display:block;touch-action:pan-y">
-    ${grid}${passLine}${lab}
-    ${line(am, 'var(--series-am)', '午前')}
-    ${line(pm, 'var(--series-pm)', '午後')}
-  </svg>`;
+// 年度行タップ: その回の弱点だけを復習（弱点0なら開始しない）。中断・再開はセッション機構で共通に動く。
+function startYearReview(year, term) {
+  const qs = shuffle(weakList().filter(q => q.year === year && q.term === term));
+  if (!qs.length) { toast('この回に弱点はありません'); return; }
+  state.practice = { mode: 'review', label: examLabel(year, term) + ' 復習', queue: qs.map(q => q.id), idx: 0, picked: null };
+  persistSession();
+  go('practice');
 }
 
 /* ============ 演習（過去問・アプリ内完結） ============ */
@@ -692,13 +645,22 @@ function progressBarHtml(pr) {
   const weakPct = pr.included ? pr.weak / pr.included * 100 : 0;
   return `<div class="pbar"><span class="pb-ok" style="width:${okPct}%"></span><span class="pb-weak" style="width:${weakPct}%"></span></div>`;
 }
-function examProgressHtml() {
+// tappable=true で年度行を「その回の弱点復習」開始ボタンにする（弱点0は非活性＋「弱点なし」）
+function examSummaryHtml(tappable) {
+  if (!BANK_META.exams.length) return '<div class="empty">なし</div>';
   return BANK_META.exams.map(e => {
     const pr = examProgress(e.year, e.term);
-    return `<div class="exrow">
-      <div class="exrow-h"><span class="exn">${esc(e.label)}</span>
+    const canReview = !!tappable && pr.weak > 0;
+    const rowAttr = canReview
+      ? `class="exrow tap" role="button" tabindex="0" onclick="startYearReview(${e.year},'${e.term}')"`
+      : 'class="exrow"';
+    const go = !tappable ? '' : (pr.weak > 0
+      ? `<div class="exgo-row"><span class="exgo">この回の弱点を復習 ▶</span></div>`
+      : `<div class="exgo-row"><span class="exgo none">弱点なし</span></div>`);
+    return `<div ${rowAttr}>
+      <div class="exrow-h"><span class="exn">${esc(e.label)}${canReview ? ' <span class="tapmark">▶</span>' : ''}</span>
         <span class="exc num">収録${pr.included}問中 挑戦${pr.attempted}・<b style="color:var(--good)">正解${pr.correct}</b>・<b style="color:var(--danger)">弱点${pr.weak}</b></span></div>
-      ${progressBarHtml(pr)}</div>`;
+      ${progressBarHtml(pr)}${go}</div>`;
   }).join('');
 }
 // 中断セッションが有効か（キューの問題が現バンクに存在し、まだ残りがある）
@@ -750,8 +712,7 @@ function viewPractice() {
     <div class="kpi"><div class="v" style="color:var(--good)">${okN}<small>問</small></div><div class="l">正解</div></div>
     <div class="kpi"><div class="v" style="color:var(--danger)">${weak}<small>問</small></div><div class="l">弱点</div></div>
   </div>
-  <h2>年度別の進捗</h2><div class="card">${examProgressHtml()}</div>
-  <div class="hint">解答は自動で学習ログ・グラフに記録されます。「わからない」も不正解として弱点に入ります。<br>${esc(BANK_META.source || '出典: 情報処理推進機構(IPA) 過去問題')}</div>`;
+  <div class="hint">解答は自動で学習ログに記録されます。「わからない」も不正解として弱点に入ります。<br>年度別の進捗と「回ごとの弱点復習」は <b>「年度別」タブ</b> から。<br>${esc(BANK_META.source || '出典: 情報処理推進機構(IPA) 過去問題')}</div>`;
 
   return `<h1>過去問演習</h1>${resume}${menu}${stats}`;
 }
@@ -780,7 +741,7 @@ function viewQuiz() {
   if (p.idx >= p.queue.length) {
     return `<h1>${esc(p.label)}</h1><div class="card review-card" style="text-align:center;padding:26px 16px">
       <div style="font-size:24px;font-weight:800;margin-bottom:6px">🎉 セット完了！</div>
-      <div class="hint">結果はグラフに反映されています。</div>
+      <div class="hint">結果は学習ログ・年度別サマリに反映されています。</div>
       <button class="primary" style="width:100%;padding:13px;margin-top:16px" onclick="endPractice()">演習トップに戻る</button></div>`;
   }
   const q = BANK_BY_ID[p.queue[p.idx]];
@@ -870,7 +831,7 @@ function viewSettings() {
   </div>
   <h2>収録している過去問（年度別の進捗）</h2>
   <div class="card">
-    ${examProgressHtml() || '<div class="empty">なし</div>'}
+    ${examSummaryHtml(false)}
     <div class="muted-note">${esc(BANK_META.source || '')}<br>問題文・選択肢・正解はIPA公開の過去問題／解答例に基づきます（出典明記を条件にIPAが再利用を許諾）。<br>図表・プログラムを含む問題はv1では収録していません。<br><b>解説はAIが生成したものであり、誤りを含む可能性があります。</b>最終確認は公式解答例や過去問道場でお願いします。</div>
   </div>
   <h2>データ管理</h2>
@@ -945,7 +906,7 @@ if (typeof module !== 'undefined' && module.exports) {
     get store() { return store; }, set store(v) { store = v; },
     state, defaultStore, migrate,
     go, render, startAdd, formSet, saveForm, delLog, currentStreak, weekCount, weekCountFn: weekCount,
-    accuracySeries, partAgg, buildChart, logDates, recordPracticeAnswer,
+    partAgg, logDates, recordPracticeAnswer, viewSummary, examSummaryHtml, startYearReview,
     calSelect, startAddCal, calMove,
     statusOf, isAttempted, isWeak, isOk, weakList, applyResult, examProgress, validSession, persistSession, resumeSession,
     startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl, UNKNOWN,

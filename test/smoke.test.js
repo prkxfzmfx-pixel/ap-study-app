@@ -71,7 +71,7 @@ for (const q of api.BANK) {
 console.log(`OK 問題バンク: ${api.BANK.length}問／全問 正解がIPA解答例と一致・選択肢4・解説あり`);
 
 // 2) 全タブが描画される
-for (const t of ['home', 'cal', 'chart', 'practice', 'settings']) {
+for (const t of ['home', 'cal', 'summary', 'practice', 'settings']) {
   api.go(t);
   assert(elements.main.innerHTML.length > 80, t + ' 画面が描画される');
 }
@@ -88,9 +88,8 @@ api.startAdd(api.todayISO());
 api.formSet('part', 'am'); api.formSet('total', '10'); api.formSet('correct', '7');
 api.saveForm();
 assert.strictEqual(api.store.logs.filter(l => l.source === 'manual').length, 1, '手動ログ1件');
-let ser = api.accuracySeries('am');
-assert(ser.length === 1 && Math.round(ser[0].rate) === 70, '午前系列 70%');
-console.log('OK 手動ログ追加 → 正答率系列に反映（70%）');
+assert(Math.round(api.partAgg('am').rate) === 70, '午前サマリ 70%');
+console.log('OK 手動ログ追加 → 午前サマリ(partAgg)に反映（70%）');
 
 // 5) 演習: 令和6年秋を開始 → 正解を選ぶ → 記録・習熟が更新（未挑戦→正解）
 api.pickExam('6_aki');
@@ -199,8 +198,26 @@ let cx = cur(); api.answerQuiz(cx.answer); api.nextQuiz();                      
 let cy = cur(); api.answerQuiz(['ア', 'イ', 'ウ', 'エ'].find(k => k !== cy.answer)); api.nextQuiz(); // 弱点1
 const pr = api.examProgress(6, 'aki');
 assert(pr.included === api.BANK.length && pr.correct === 1 && pr.weak === 1 && pr.attempted === 2, '進捗集計: 正解1/弱点1/挑戦2');
-api.endPractice(); api.go('practice');
-assert(elements.main.innerHTML.includes('年度別の進捗') && elements.main.innerHTML.includes('pbar'), '進捗バーUI表示');
+api.endPractice(); api.go('summary');
+assert(elements.main.innerHTML.includes('pbar'), '年度別サマリに進捗バー表示');
 console.log('OK 年度別進捗: 集計＋プログレスバー表示');
 
-console.log('\n=== 全14項目 PASS ===');
+// 15) 年度別タブ（旧グラフ）＝年度別サマリ、年度タップでその回の弱点復習
+api.resetProgress();
+const wq = api.BANK.find(q => q.year === 6 && q.term === 'aki');
+api.applyResult(wq.id, false);                  // r6a に弱点を1つ作る
+api.go('summary');
+const smHtml = elements.main.innerHTML;
+assert(smHtml.includes('年度別サマリ') && smHtml.includes('pbar'), '年度別タブに進捗バー');
+assert(smHtml.includes("startYearReview(6,'aki')"), '弱点ある回はタップで復習開始');
+assert(!smHtml.includes('<svg'), '折れ線グラフSVGは廃止');
+api.startYearReview(6, 'aki');
+assert(api.state.tab === 'practice' && api.state.practice.mode === 'review', '年度別復習が開始');
+assert(api.state.practice.queue.length === 1 && api.state.practice.queue[0] === wq.id, 'その回の弱点のみ出題');
+assert(api.validSession(), '年度別復習も中断・再開可能');
+api.endPractice();
+api.startYearReview(5, 'aki');                    // 収録なし=弱点0 → 開始しない
+assert(api.state.practice === null, '弱点0の回はタップしても開始しない');
+console.log('OK 年度別タブ＝サマリ／年度タップ復習（弱点のみ・中断再開・0件は非開始・SVG廃止）');
+
+console.log('\n=== 全15項目 PASS ===');
