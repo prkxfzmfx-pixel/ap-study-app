@@ -270,6 +270,24 @@ console.log('OK 図表画像つき問題のUI表示（img対応）');
   assert(r.ok, 'force指定は同日でも実行');
   console.log('OK クラウド自動バックアップ（1日1回・sha更新・スキップ・force）');
 
+  // 17b) 422リトライ: GETがキャッシュ等でshaを返さずPUTが422になったら、shaを取り直して1回だけ再試行
+  const calls2 = [];
+  let getCount = 0;
+  global.fetch = async (url, opts = {}) => {
+    calls2.push({ url, method: opts.method || 'GET', body: opts.body, cache: opts.cache });
+    if (!opts.method) { getCount++; return { status: 200, ok: true, json: async () => (getCount === 1 ? {} : { sha: 'fresh' }) }; }
+    const b = JSON.parse(opts.body);
+    if (!b.sha) return { ok: false, status: 422, json: async () => ({}) };
+    return { ok: true, status: 200, json: async () => ({}) };
+  };
+  r = await api.cloudBackup(true);
+  assert(r.ok, '422後の再試行で成功');
+  const puts = calls2.filter(c => c.method === 'PUT');
+  assert.strictEqual(puts.length, 2, 'PUTは2回（初回422→再試行）');
+  assert.strictEqual(JSON.parse(puts[1].body).sha, 'fresh', '再試行は取り直したshaを指定');
+  assert(calls2.filter(c => c.method === 'GET').every(c => c.cache === 'no-store'), 'GETはcache:no-store');
+  console.log('OK バックアップ422リトライ（sha取り直し・no-store）');
+
   // 18) かんたん設定コード（6桁→トークン復号）の往復。実コード・実トークンは使わずテスト専用暗号文で検証
   const enc = new TextEncoder();
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -284,5 +302,5 @@ console.log('OK 図表画像つき問題のUI表示（img対応）');
   assert(pinFailed, '誤ったコードは復号失敗（AES-GCM認証エラー）');
   console.log('OK かんたん設定コード（復号往復・誤コード検出）');
 
-  console.log('\n=== 全19項目 PASS ===');
+  console.log('\n=== 全20項目 PASS ===');
 })().catch(e => { console.error(e); process.exit(1); });

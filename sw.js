@@ -1,5 +1,5 @@
 // ネットワーク優先・失敗時キャッシュ（オフラインでも起動できるように）
-const CACHE = 'apstudy-v7';
+const CACHE = 'apstudy-v8';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
   './questions/manifest.js', './questions/r6a.js',
   './icons/icon-192.png', './icons/icon-512.png'];
