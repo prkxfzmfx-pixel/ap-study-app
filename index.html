@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AP学習記録">
+<meta name="theme-color" content="#6d5ef0">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>応用情報 学習記録</title>
+<style>
+:root {
+  --surface-1: #fcfcfb;
+  --surface-2: #f2f1ee;
+  --page: #f9f9f7;
+  --ink-1: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11,11,11,0.10);
+  --accent: #6d5ef0;         /* UIアクセント（学習テーマの紫） */
+  --accent-2: #a99bff;
+  --series-am: #2a78d6;      /* 午前（検証済みパレット slot1 blue） */
+  --series-pm: #eb6834;      /* 午後（検証済みパレット slot6 orange） */
+  --pass-line: #0ca30c;      /* 合格ライン60% */
+  --danger: #d03b3b;
+  --good: #0ca30c;
+  --good-bg: rgba(12,163,12,0.12);
+  --danger-bg: rgba(208,59,59,0.12);
+  --hero-a: #6d5ef0;
+  --hero-b: #8b5cf0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-1: #1a1a19;
+    --surface-2: #232322;
+    --page: #0d0d0d;
+    --ink-1: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --accent: #8b7dff;
+    --accent-2: #6d5ef0;
+    --series-am: #3987e5;
+    --series-pm: #d95926;
+    --pass-line: #0ca30c;
+    --danger: #e66767;
+    --good: #22b322;
+    --good-bg: rgba(34,179,34,0.16);
+    --danger-bg: rgba(230,103,103,0.16);
+    --hero-a: #5b4fd6;
+    --hero-b: #7c4fe0;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; height: 100%; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  background: var(--page);
+  color: var(--ink-1);
+  font-size: 16px;
+  height: 100vh;
+  height: var(--appH, 100dvh);
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--safe-top, env(safe-area-inset-top));
+  overflow: hidden;
+}
+main {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 12px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+h1 { font-size: 18px; padding: 14px 4px 6px; }
+h2 { font-size: 14px; color: var(--ink-2); font-weight: 600; margin: 18px 4px 8px; }
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+button {
+  font: inherit;
+  color: var(--ink-1);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button.primary { background: var(--accent); color: #fff; border-color: transparent; font-weight: 600; }
+button.ghost { background: transparent; border-color: transparent; color: var(--accent); }
+button.danger { color: var(--danger); }
+button:disabled { opacity: .5; }
+input, select, textarea {
+  font: inherit;
+  color: var(--ink-1);
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+input[type="number"] { text-align: right; font-variant-numeric: tabular-nums; }
+textarea { width: 100%; resize: vertical; min-height: 44px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ボトムナビ */
+nav {
+  flex-shrink: 0;
+  display: flex;
+  background: var(--surface-1);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+nav button {
+  flex: 1; border: none; border-radius: 0; background: none;
+  padding: 8px 0 6px; font-size: 10px; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+nav button .ico { font-size: 20px; line-height: 1; }
+nav button.active { color: var(--accent); font-weight: 600; }
+
+/* ヒーロー（カウントダウン） */
+.hero {
+  background: linear-gradient(135deg, var(--hero-a), var(--hero-b));
+  color: #fff; border-radius: 18px; padding: 22px 18px; margin: 6px 0 12px;
+  text-align: center; box-shadow: 0 8px 24px rgba(109,94,240,0.28);
+}
+.hero .lbl { font-size: 13px; opacity: .9; }
+.hero .big { font-size: 68px; font-weight: 800; line-height: 1; margin: 4px 0 2px; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
+.hero .big small { font-size: 26px; font-weight: 700; margin-left: 4px; letter-spacing: 0; }
+.hero .exam { font-size: 14px; font-weight: 600; margin-top: 6px; }
+.hero .date { font-size: 12px; opacity: .85; margin-top: 2px; }
+.hero.passed .big { font-size: 34px; }
+
+/* KPI */
+.kpirow { display: flex; gap: 10px; margin-bottom: 12px; }
+.kpi { flex: 1; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 12px; text-align: center; }
+.kpi .v { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.kpi .v small { font-size: 13px; font-weight: 600; }
+.kpi .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.streak .v { color: var(--accent); }
+.statgrid { display: flex; gap: 10px; }
+.statgrid .kpi { flex: 1; }
+
+/* ログフォーム */
+.seg { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.seg button { flex: 1; border: none; border-radius: 0; background: var(--surface-1); color: var(--ink-2); padding: 9px 0; }
+.seg button.on { background: var(--accent); color: #fff; font-weight: 600; }
+.frow { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+.frow label { font-size: 13px; color: var(--ink-2); min-width: 4em; }
+.frow input.qn { width: 90px; }
+.frow .sep { color: var(--muted); }
+.hint { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+.accbadge { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
+
+/* ログ一覧 */
+.logitem { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--grid); }
+.logitem:first-child { border-top: none; }
+.logitem .tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #fff; flex-shrink: 0; }
+.logitem .tag.am { background: var(--series-am); }
+.logitem .tag.pm { background: var(--series-pm); }
+.logitem .mid { flex: 1; min-width: 0; }
+.logitem .mid .d { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.logitem .mid .d .src { font-size: 10px; font-weight: 600; color: var(--accent); background: var(--surface-2); padding: 1px 6px; border-radius: 999px; }
+.logitem .mid .m { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logitem .sc { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; }
+.logitem .sc b { font-size: 16px; }
+.logitem .del { border: none; background: none; color: var(--muted); font-size: 16px; padding: 4px 6px; }
+.empty { color: var(--muted); font-size: 14px; text-align: center; padding: 22px 8px; line-height: 1.7; }
+
+/* カレンダー */
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-head .ym { font-size: 17px; font-weight: 700; }
+.cal-head button { min-width: 44px; }
+table.cal { width: 100%; border-collapse: collapse; table-layout: fixed; }
+table.cal th { font-size: 11px; color: var(--muted); font-weight: 500; padding: 4px 0; }
+table.cal td {
+  height: 52px; vertical-align: top; text-align: center;
+  border-top: 1px solid var(--grid); cursor: pointer; padding: 4px 0;
+}
+table.cal td .d { font-size: 13px; }
+table.cal td.today .d {
+  display: inline-block; min-width: 22px; line-height: 22px;
+  background: var(--accent); color: #fff; border-radius: 11px; font-weight: 600;
+}
+table.cal td.selday { background: rgba(109,94,240,0.14); border-radius: 8px; }
+table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-top: 4px; height: 8px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot.am { background: var(--series-am); }
+.dot.pm { background: var(--series-pm); }
+.cal-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--ink-2); align-items: center; justify-content: center; }
+.cal-legend span { display: flex; align-items: center; gap: 5px; }
+
+/* グラフ */
+.legend { display: flex; gap: 16px; margin: 2px 0 6px; font-size: 12px; color: var(--ink-2); align-items: center; flex-wrap: wrap; }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.legend i.pass { height: 0; border-top: 2px dashed var(--pass-line); background: none; }
+.chartwrap { position: relative; }
+
+/* 演習（過去問） */
+.mode-btn { display: block; width: 100%; text-align: left; padding: 14px; margin-bottom: 10px; border-radius: 14px; }
+.mode-btn .t { font-size: 16px; font-weight: 700; }
+.mode-btn .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.mode-btn.accent { background: var(--accent); color: #fff; border-color: transparent; }
+.mode-btn.accent .s { color: rgba(255,255,255,.85); }
+.mode-btn:disabled .t { color: var(--muted); }
+.qmeta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.qmeta .src { font-size: 11px; color: var(--muted); }
+.qmeta .prog { font-size: 12px; color: var(--accent); font-weight: 700; }
+.qtext { font-size: 16px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; margin-bottom: 14px; }
+.choice {
+  display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left;
+  padding: 12px; margin-bottom: 8px; border-radius: 12px; line-height: 1.6;
+}
+.choice .k { font-weight: 800; flex-shrink: 0; width: 1.4em; }
+.choice.correct { background: var(--good-bg); border-color: var(--good); }
+.choice.wrong { background: var(--danger-bg); border-color: var(--danger); }
+.choice.dim { opacity: .55; }
+.verdict { text-align: center; font-weight: 800; font-size: 18px; margin: 10px 0 4px; }
+.verdict.ok { color: var(--good); }
+.verdict.ng { color: var(--danger); }
+.ansline { text-align: center; font-size: 14px; color: var(--ink-2); margin-bottom: 10px; }
+.ansline b { color: var(--ink-1); font-size: 16px; }
+.masterpill { display:inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
+.masterpill.weak { background: var(--danger-bg); color: var(--danger); }
+.expl { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; margin: 10px 0; font-size: 14px; line-height: 1.8; }
+.expl-h { font-weight: 700; font-size: 12px; color: var(--accent); margin-bottom: 4px; }
+.expl-ai { font-size: 11px; color: var(--muted); margin-top: 8px; }
+.dojo-row { text-align: right; margin-top: 8px; }
+.dojo-link { font-size: 11px; color: var(--muted); text-decoration: none; }
+.dojo-link:hover { color: var(--accent); }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(70px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--ink-1); color: var(--page); padding: 9px 16px; border-radius: 999px; font-size: 13px;
+  opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; white-space: nowrap;
+}
+.toast.show { opacity: .95; }
+.rowbtns { display: flex; gap: 8px; }
+.rowbtns button { flex: 1; }
+.settings-row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.settings-row label { font-size: 13px; color: var(--ink-2); min-width: 4.5em; }
+.muted-note { font-size: 12px; color: var(--muted); line-height: 1.7; margin-top: 6px; }
+select.mini { padding: 8px; }
+</style>
+</head>
+<body>
+<main id="main"></main>
+<nav id="nav"></nav>
+<div class="toast" id="toast"></div>
+<!-- 収録回マニフェスト → 各回の問題ファイルをマニフェスト駆動で動的ロード（回の追加はファイル追加＋manifest1行で完結） -->
+<script src="questions/manifest.js"></script>
+<script>
+  window.AP_QUESTIONS = [];
+  window.AP_EXAMS = [];
+  window.AP_REGISTER = function (meta, qs) {
+    window.AP_EXAMS.push(meta);
+    for (var i = 0; i < qs.length; i++) window.AP_QUESTIONS.push(qs[i]);
+  };
+  (function () {
+    var m = window.AP_MANIFEST || { base: 'questions/', exams: [] };
+    var base = m.base || 'questions/';
+    for (var i = 0; i < m.exams.length; i++) {
+      document.write('<script src="' + base + m.exams[i].file + '"><\/script>');
+    }
+  })();
+</script>
+<script>
+'use strict';
+
+/* ============ 問題バンク（manifest.js＋各回ファイルが window.AP_QUESTIONS/AP_EXAMS を構築） ============ */
+const BANK = (typeof window !== 'undefined' && window.AP_QUESTIONS) ? window.AP_QUESTIONS : [];
+const BANK_META = {
+  source: (typeof window !== 'undefined' && window.AP_MANIFEST && window.AP_MANIFEST.source) || '',
+  exams: (typeof window !== 'undefined' && window.AP_EXAMS) ? window.AP_EXAMS : []
+};
+const BANK_BY_ID = {};
+BANK.forEach(q => { BANK_BY_ID[q.id] = q; });
+const MASTER_STREAK = 2;   // 連続正解で克服
+
+/* ============ 永続化 ============ */
+const LS_KEY = 'apstudy.v1';
+const DEFAULT_EXAM_DATE = '2026-10-28';           // 令和8年度 前期試験 科目A 実施開始日（CBT）
+const DEFAULT_EXAM_NAME = '応用情報 前期(科目A)';
+
+function defaultStore() {
+  return { version: 2, examDate: DEFAULT_EXAM_DATE, examName: DEFAULT_EXAM_NAME, logs: [], mastery: {}, qmemo: {} };
+}
+let store = loadStore();
+function loadStore() {
+  let raw = null;
+  try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
+  if (!raw) { const s = defaultStore(); persist(s); return s; }
+  let s;
+  try { s = JSON.parse(raw); } catch (e) { s = defaultStore(); }
+  return migrate(s);
+}
+function migrate(s) {
+  if (!s || typeof s !== 'object') s = defaultStore();
+  if (!s.examDate) s.examDate = DEFAULT_EXAM_DATE;
+  if (!s.examName) s.examName = DEFAULT_EXAM_NAME;
+  if (!Array.isArray(s.logs)) s.logs = [];
+  if (!s.mastery || typeof s.mastery !== 'object') s.mastery = {};
+  if (!s.qmemo || typeof s.qmemo !== 'object') s.qmemo = {};
+  delete s.notes;                 // v1のノート機能は廃止
+  s.logs.forEach(l => {
+    l.total = Math.max(0, Number(l.total) || 0);
+    l.correct = Math.max(0, Math.min(l.total, Number(l.correct) || 0));
+    if (l.part !== 'pm') l.part = 'am';
+    if (typeof l.memo !== 'string') l.memo = '';
+    if (l.source !== 'practice') l.source = 'manual';
+    if (!l.id) l.id = uid();
+  });
+  s.version = 2;
+  persist(s);
+  return s;
+}
+function persist(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s || store)); } catch (e) {} }
+function save() { persist(store); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* ============ 日付ユーティリティ ============ */
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function isoToDate(iso) { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); }
+function toISO(dt) { return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`; }
+function addDays(iso, n) { const d = isoToDate(iso); d.setDate(d.getDate() + n); return toISO(d); }
+const WD = ['日', '月', '火', '水', '木', '金', '土'];
+function fmtMD(iso) { const d = isoToDate(iso); return `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`; }
+function daysBetween(aIso, bIso) { return Math.round((isoToDate(bIso) - isoToDate(aIso)) / 86400000); }
+function daysUntilExam() { return daysBetween(todayISO(), store.examDate); }
+
+/* ============ 集計（学習ログ） ============ */
+function logDates() { return Array.from(new Set(store.logs.map(l => l.date))).sort(); }
+function currentStreak() {
+  const set = new Set(store.logs.map(l => l.date));
+  if (set.size === 0) return 0;
+  let cur = todayISO();
+  if (!set.has(cur)) cur = addDays(cur, -1);
+  if (!set.has(cur)) return 0;
+  let n = 0;
+  while (set.has(cur)) { n++; cur = addDays(cur, -1); }
+  return n;
+}
+function weekCount() {
+  const set = new Set(store.logs.map(l => l.date));
+  let n = 0; for (let i = 0; i < 7; i++) if (set.has(addDays(todayISO(), -i))) n++;
+  return n;
+}
+function logsForDate(iso) { return store.logs.filter(l => l.date === iso).sort((a, b) => a.part.localeCompare(b.part)); }
+function partAgg(part) {
+  let t = 0, c = 0;
+  store.logs.forEach(l => { if (l.part === part) { t += l.total; c += l.correct; } });
+  return { total: t, correct: c, rate: t ? c / t * 100 : null };
+}
+function accuracySeries(part) {
+  const byDate = {};
+  store.logs.forEach(l => {
+    if (l.part !== part) return;
+    if (!byDate[l.date]) byDate[l.date] = { total: 0, correct: 0 };
+    byDate[l.date].total += l.total; byDate[l.date].correct += l.correct;
+  });
+  return Object.keys(byDate).sort().map(date => ({
+    date, rate: byDate[date].total ? byDate[date].correct / byDate[date].total * 100 : null
+  })).filter(p => p.rate != null);
+}
+// 演習の解答を当日の practice ログに集計（グラフ・カレンダー・ストリークに自動連携）
+function recordPracticeAnswer(part, isCorrect) {
+  const date = todayISO();
+  let log = store.logs.find(l => l.date === date && l.part === part && l.source === 'practice');
+  if (!log) { log = { id: uid(), date, part, total: 0, correct: 0, memo: '', source: 'practice' }; store.logs.push(log); }
+  log.total += 1; if (isCorrect) log.correct += 1;
+}
+
+/* ============ 習熟・弱点 ============ */
+function masteryOf(qid) { return store.mastery[qid] || { seen: 0, correctStreak: 0, wrong: false }; }
+function isWeak(qid) { const m = store.mastery[qid]; return !!(m && m.wrong && m.correctStreak < MASTER_STREAK); }
+function isMastered(qid) { const m = store.mastery[qid]; return !!(m && m.wrong && m.correctStreak >= MASTER_STREAK); }
+function weakList() { return BANK.filter(q => isWeak(q.id)); }
+function applyResult(qid, isCorrect) {
+  const m = masteryOf(qid);
+  m.seen += 1;
+  if (isCorrect) m.correctStreak += 1;
+  else { m.correctStreak = 0; m.wrong = true; }
+  store.mastery[qid] = m;
+}
+
+/* ============ 状態 ============ */
+const state = {
+  tab: 'home',
+  calY: new Date().getFullYear(),
+  calM: new Date().getMonth(),
+  selDate: null,
+  form: null,          // 手動ログ入力 { date, part, total, correct, memo }
+  practice: null,      // { mode, label, queue:[qid], idx, part, picked, done }
+  pickYear: (BANK_META.exams[0] && BANK_META.exams[0].year) || 6,
+  pickTerm: (BANK_META.exams[0] && BANK_META.exams[0].term) || 'aki',
+};
+function newForm(date) { return { date, part: 'am', total: '', correct: '', memo: '' }; }
+
+/* ============ ナビ ============ */
+const TABS = [
+  { id: 'home', ico: '🏠', name: 'ホーム' },
+  { id: 'cal', ico: '📅', name: 'カレンダー' },
+  { id: 'chart', ico: '📈', name: 'グラフ' },
+  { id: 'practice', ico: '✏️', name: '演習' },
+  { id: 'settings', ico: '⚙️', name: '設定' },
+];
+function go(tab) {
+  state.tab = tab;
+  if (tab !== 'home' && tab !== 'cal') state.form = null;
+  if (tab !== 'practice') state.practice = null;
+  render();
+  const m = document.getElementById('main'); if (m) m.scrollTo(0, 0);
+}
+
+/* ============ 描画 ============ */
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function render() {
+  const main = document.getElementById('main');
+  let html = '';
+  if (state.tab === 'home') html = viewHome();
+  else if (state.tab === 'cal') html = viewCal();
+  else if (state.tab === 'chart') html = viewChart();
+  else if (state.tab === 'practice') html = viewPractice();
+  else if (state.tab === 'settings') html = viewSettings();
+  main.innerHTML = html;
+  const nav = document.getElementById('nav');
+  nav.innerHTML = TABS.map(t =>
+    `<button class="${state.tab === t.id ? 'active' : ''}" onclick="go('${t.id}')">
+      <span class="ico">${t.ico}</span>${t.name}</button>`).join('');
+}
+
+/* ---- ホーム ---- */
+function viewHome() {
+  const dleft = daysUntilExam();
+  let hero;
+  if (dleft > 0) {
+    hero = `<div class="hero"><div class="lbl">試験まであと</div>
+      <div class="big">${dleft}<small>日</small></div>
+      <div class="exam">${esc(store.examName)}</div>
+      <div class="date">${esc(store.examDate)}</div></div>`;
+  } else if (dleft === 0) {
+    hero = `<div class="hero passed"><div class="lbl">🎯 本番</div>
+      <div class="big">今日が試験日</div>
+      <div class="exam">${esc(store.examName)}</div><div class="date">がんばって！</div></div>`;
+  } else {
+    hero = `<div class="hero passed"><div class="lbl">試験日</div>
+      <div class="big">お疲れさま</div>
+      <div class="exam">${esc(store.examName)} は ${-dleft}日前</div>
+      <div class="date">設定から次の試験日に更新できます</div></div>`;
+  }
+  const am = partAgg('am'), pm = partAgg('pm');
+  const kpi = `<div class="kpirow">
+    <div class="kpi streak"><div class="v">🔥${currentStreak()}<small>日</small></div><div class="l">連続学習</div></div>
+    <div class="kpi"><div class="v">${weekCount()}<small>日</small></div><div class="l">今週の学習</div></div>
+    <div class="kpi"><div class="v">${logDates().length}<small>日</small></div><div class="l">通算学習日</div></div>
+  </div>`;
+  const accLine = `<div class="statgrid" style="margin-bottom:12px">
+    <div class="kpi"><div class="v" style="color:var(--series-am)">${am.rate == null ? '—' : Math.round(am.rate) + '<small>%</small>'}</div><div class="l">午前 正答率</div></div>
+    <div class="kpi"><div class="v" style="color:var(--series-pm)">${pm.rate == null ? '—' : Math.round(pm.rate) + '<small>%</small>'}</div><div class="l">午後 正答率</div></div>
+  </div>`;
+
+  const practiceBtn = BANK.length
+    ? `<button class="primary" style="width:100%;padding:14px;font-size:16px;margin-bottom:8px" onclick="go('practice')">✏️ 過去問を解く（${BANK.length}問収録）</button>`
+    : '';
+  let addArea;
+  if (state.form && state.tab === 'home') addArea = `<div class="card">${logFormHtml()}</div>`;
+  else addArea = `<button style="width:100%;padding:12px" onclick="startAdd('${todayISO()}')">＋ 学習を手動で記録</button>`;
+
+  const recent = store.logs.slice().sort((a, b) => b.date.localeCompare(a.date) || a.part.localeCompare(b.part)).slice(0, 6);
+  const recentHtml = recent.length
+    ? `<div class="card">${recent.map(logItemHtml).join('')}</div>`
+    : `<div class="card"><div class="empty">まだ記録がありません。<br>「過去問を解く」または手動記録から始めましょう。</div></div>`;
+
+  return `<h1>応用情報 学習記録</h1>${hero}${kpi}${accLine}${practiceBtn}${addArea}<h2>直近の記録</h2>${recentHtml}`;
+}
+function logItemHtml(l) {
+  const rate = l.total ? Math.round(l.correct / l.total * 100) : 0;
+  const src = l.source === 'practice' ? '<span class="src">演習</span>' : '';
+  const memo = l.memo ? esc(l.memo) : '';
+  return `<div class="logitem">
+    <span class="tag ${l.part}">${l.part === 'am' ? '午前' : '午後'}</span>
+    <div class="mid"><div class="d">${fmtMD(l.date)}${src}</div>${memo ? `<div class="m">${memo}</div>` : ''}</div>
+    <div class="sc"><b>${l.correct}</b>/${l.total} <span class="accbadge" style="color:${rate >= 60 ? 'var(--good)' : 'var(--muted)'}">${rate}%</span></div>
+    <button class="del" onclick="delLog('${l.id}')" aria-label="削除">✕</button>
+  </div>`;
+}
+
+/* ---- 手動ログ入力フォーム ---- */
+function logFormHtml() {
+  const f = state.form;
+  const rate = (Number(f.total) > 0 && f.correct !== '') ? Math.round(Number(f.correct) / Number(f.total) * 100) : null;
+  return `<div style="font-weight:700;margin-bottom:8px">${fmtMD(f.date)} の学習を記録</div>
+    <div class="seg" style="margin-bottom:10px">
+      <button class="${f.part === 'am' ? 'on' : ''}" onclick="formSet('part','am')">午前</button>
+      <button class="${f.part === 'pm' ? 'on' : ''}" onclick="formSet('part','pm')">午後</button>
+    </div>
+    <div class="frow"><label>問題数</label>
+      <input class="qn num" type="number" inputmode="numeric" min="0" value="${f.total}" oninput="formSet('total',this.value)" placeholder="0"><span class="sep">問中</span></div>
+    <div class="frow"><label>正答数</label>
+      <input class="qn num" type="number" inputmode="numeric" min="0" value="${f.correct}" oninput="formSet('correct',this.value)" placeholder="0"><span class="sep">問正解</span>
+      ${rate != null ? `<span class="accbadge" style="color:${rate >= 60 ? 'var(--good)' : 'var(--muted)'};font-size:15px">${rate}%</span>` : ''}</div>
+    <div class="frow" style="align-items:flex-start"><label>メモ</label>
+      <textarea oninput="formSet('memo',this.value)" placeholder="任意（分野・気づきなど）">${esc(f.memo)}</textarea></div>
+    <div class="rowbtns" style="margin-top:6px">
+      <button onclick="cancelForm()">キャンセル</button>
+      <button class="primary" onclick="saveForm()">保存</button></div>`;
+}
+function startAdd(date) { state.form = newForm(date); render(); }
+function cancelForm() { state.form = null; render(); }
+function formSet(k, v) { if (state.form) state.form[k] = v; }
+function saveForm() {
+  const f = state.form; if (!f) return;
+  const total = Math.max(0, Number(f.total) || 0);
+  let correct = Math.max(0, Number(f.correct) || 0);
+  if (total <= 0) { toast('問題数を入力してください'); return; }
+  if (correct > total) correct = total;
+  store.logs.push({ id: uid(), date: f.date, part: f.part, total, correct, memo: (f.memo || '').trim(), source: 'manual' });
+  save(); state.form = null; render(); toast('記録しました 🎉');
+}
+function delLog(id) { store.logs = store.logs.filter(l => l.id !== id); save(); render(); }
+
+/* ---- カレンダー ---- */
+function viewCal() {
+  const y = state.calY, m = state.calM;
+  const startWd = new Date(y, m, 1).getDay();
+  const days = new Date(y, m + 1, 0).getDate();
+  const byDate = {};
+  store.logs.forEach(l => { const d = isoToDate(l.date); if (d.getFullYear() === y && d.getMonth() === m) (byDate[l.date] || (byDate[l.date] = new Set())).add(l.part); });
+
+  let out = '', col = 0, buf = '';
+  const push = c => { buf += c; col++; if (col === 7) { out += `<tr>${buf}</tr>`; buf = ''; col = 0; } };
+  for (let i = 0; i < startWd; i++) push('<td></td>');
+  for (let d = 1; d <= days; d++) {
+    const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const parts = byDate[iso];
+    const marks = `<div class="marks">${parts && parts.has('am') ? '<span class="dot am"></span>' : ''}${parts && parts.has('pm') ? '<span class="dot pm"></span>' : ''}</div>`;
+    const cls = [iso === todayISO() ? 'today' : '', iso === state.selDate ? 'selday' : ''].filter(Boolean).join(' ');
+    push(`<td class="${cls}" onclick="calSelect('${iso}')"><span class="d">${d}</span>${marks}</td>`);
+  }
+  if (col > 0) { while (col < 7) { buf += '<td></td>'; col++; } out += `<tr>${buf}</tr>`; }
+  const grid = `<table class="cal"><thead><tr>${WD.map(w => `<th>${w}</th>`).join('')}</tr></thead><tbody>${out}</tbody></table>`;
+
+  const head = `<div class="cal-head"><button onclick="calMove(-1)">‹</button><div class="ym">${y}年${m + 1}月</div><button onclick="calMove(1)">›</button></div>`;
+  const legend = `<div class="cal-legend"><span><span class="dot am"></span>午前</span><span><span class="dot pm"></span>午後</span><span class="num">学習 ${Object.keys(byDate).length}日</span></div>`;
+  return `<h1>カレンダー</h1><div class="card">${head}${grid}${legend}</div>${state.selDate ? dayDetailHtml(state.selDate) : ''}`;
+}
+function calMove(n) { let m = state.calM + n, y = state.calY; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } state.calM = m; state.calY = y; render(); }
+function calSelect(iso) { state.selDate = iso; state.form = null; render(); }
+function dayDetailHtml(iso) {
+  if (state.form && state.form.date === iso) return `<div class="card">${logFormHtml()}</div>`;
+  const logs = logsForDate(iso);
+  const list = logs.length ? logs.map(logItemHtml).join('') : `<div class="empty">この日の記録はありません。</div>`;
+  return `<h2>${fmtMD(iso)} の記録</h2><div class="card">${list}</div>
+    <button class="primary" style="width:100%;padding:12px" onclick="startAddCal('${iso}')">＋ この日に記録を追加</button>`;
+}
+function startAddCal(iso) { state.selDate = iso; state.form = newForm(iso); render(); }
+
+/* ---- グラフ ---- */
+function viewChart() {
+  const am = accuracySeries('am'), pm = accuracySeries('pm');
+  const amAgg = partAgg('am'), pmAgg = partAgg('pm');
+  let body;
+  if (am.length + pm.length === 0) {
+    body = `<div class="card"><div class="empty">記録が集まるとここに正答率の推移が表示されます。<br>「演習」タブや手動記録から始めましょう。</div></div>`;
+  } else {
+    const legend = `<div class="legend">
+      <span><i style="background:var(--series-am)"></i>午前</span>
+      <span><i style="background:var(--series-pm)"></i>午後</span>
+      <span><i class="pass"></i>合格ライン 60%</span></div>`;
+    body = `<div class="card">${legend}<div class="chartwrap">${buildChart(am, pm)}</div></div>`;
+  }
+  const stats = `<h2>累計サマリ</h2><div class="statgrid">
+    <div class="kpi"><div class="v" style="color:var(--series-am)">${amAgg.rate == null ? '—' : Math.round(amAgg.rate) + '<small>%</small>'}</div><div class="l">午前 ${amAgg.correct}/${amAgg.total}問</div></div>
+    <div class="kpi"><div class="v" style="color:var(--series-pm)">${pmAgg.rate == null ? '—' : Math.round(pmAgg.rate) + '<small>%</small>'}</div><div class="l">午後 ${pmAgg.correct}/${pmAgg.total}問</div></div>
+  </div><div class="hint" style="text-align:center">1日ごとの正答率（手動記録＋演習を合算）</div>`;
+  return `<h1>正答率の推移</h1>${body}${stats}`;
+}
+function buildChart(am, pm) {
+  const W = 600, H = 280, padL = 34, padR = 44, padT = 14, padB = 26;
+  const all = am.concat(pm);
+  const xs = all.map(p => isoToDate(p.date).getTime());
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const X = t => x1 === x0 ? (padL + (W - padL - padR) / 2) : padL + (t - x0) / (x1 - x0) * (W - padL - padR);
+  const Y = v => padT + (100 - v) / 100 * (H - padT - padB);
+  let grid = '';
+  for (let g = 0; g <= 100; g += 20) {
+    const y = Y(g);
+    grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>
+      <text x="${padL - 5}" y="${y + 4}" text-anchor="end" font-size="10" fill="var(--muted)" style="font-variant-numeric:tabular-nums">${g}</text>`;
+  }
+  const y60 = Y(60);
+  const passLine = `<line x1="${padL}" y1="${y60}" x2="${W - padR}" y2="${y60}" stroke="var(--pass-line)" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="${W - padR + 3}" y="${y60 + 4}" font-size="10" fill="var(--pass-line)" font-weight="700">60%</text>`;
+  const dset = Array.from(new Set(all.map(p => p.date))).sort();
+  const xIdx = dset.length <= 1 ? dset : (dset.length === 2 ? [dset[0], dset[dset.length - 1]] : [dset[0], dset[Math.floor(dset.length / 2)], dset[dset.length - 1]]);
+  const lab = xIdx.map(iso => { const [, mm, dd] = iso.split('-').map(Number); return `<text x="${X(isoToDate(iso).getTime())}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${mm}/${dd}</text>`; }).join('');
+  const line = (pts, color, label) => {
+    if (!pts.length) return '';
+    const seq = pts.map(p => `${X(isoToDate(p.date).getTime())},${Y(p.rate)}`);
+    if (seq.length === 1) {
+      const [cx, cy] = seq[0].split(',');
+      return `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${color}"/><text x="${Number(cx) + 8}" y="${Number(cy) + 4}" font-size="11" font-weight="700" fill="${color}">${label}</text>`;
+    }
+    const dots = pts.map(p => `<circle cx="${X(isoToDate(p.date).getTime())}" cy="${Y(p.rate)}" r="3.5" fill="${color}" stroke="var(--surface-1)" stroke-width="2"/>`).join('');
+    const last = pts[pts.length - 1], lx = X(isoToDate(last.date).getTime()), ly = Y(last.rate);
+    const dl = `<text x="${Math.min(lx + 7, W - 4)}" y="${ly + 4}" font-size="11" font-weight="700" fill="${color}">${label}</text>`;
+    return `<polyline points="${seq.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${dl}`;
+  };
+  return `<svg id="chart" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;aspect-ratio:${W}/${H};display:block;touch-action:pan-y">
+    ${grid}${passLine}${lab}
+    ${line(am, 'var(--series-am)', '午前')}
+    ${line(pm, 'var(--series-pm)', '午後')}
+  </svg>`;
+}
+
+/* ============ 演習（過去問・アプリ内完結） ============ */
+function shuffle(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+function examLabel(year, term) { return `令和${year}年${term === 'aki' ? '秋' : '春'}`; }
+function qSource(q) { return `出典: ${examLabel(q.year, q.term)} 応用情報技術者試験 ${q.part === 'am' ? '午前' : '午後'}問題（IPA）`; }
+// 過去問道場（応用情報技術者試験.com）の該当ページURL。照合用の外部リンクのみ（スクレイピング・自動ログインはしない）。
+// ディレクトリコードは「元号内の年を2桁ゼロ埋め＋_haru/_aki」。令和6年秋=06_aki, 平成29年春=29_haru。
+function dojoUrl(q) {
+  const dir = `${String(q.year).padStart(2, '0')}_${q.term}`;
+  return q.part === 'am'
+    ? `https://www.ap-siken.com/kakomon/${dir}/q${q.qnum}.html`
+    : `https://www.ap-siken.com/kakomon/${dir}/pm${String(q.qnum).padStart(2, '0')}.html`;
+}
+
+function viewPractice() {
+  if (!BANK.length) {
+    return `<h1>過去問演習</h1><div class="card"><div class="empty">問題データが読み込めませんでした。<br>オンラインで開き直してください。</div></div>`;
+  }
+  if (state.practice) return viewQuiz();
+  // モード選択
+  const weak = weakList().length;
+  const masteredN = BANK.filter(q => isMastered(q.id)).length;
+  const seenN = BANK.filter(q => store.mastery[q.id]).length;
+
+  const examOpts = BANK_META.exams.map(e =>
+    `<option value="${e.year}_${e.term}" ${state.pickYear === e.year && state.pickTerm === e.term ? 'selected' : ''}>${esc(e.label)}（${e.included}問）</option>`).join('');
+
+  const menu = `<button class="mode-btn accent" onclick="startPractice('random')">
+      <div class="t">🎲 ランダム出題</div><div class="s">全 ${BANK.length} 問からシャッフルして出題</div></button>
+    <div class="card" style="padding:12px">
+      <div class="settings-row"><label>年度を指定</label>
+        <select class="mini" style="flex:1" onchange="pickExam(this.value)">${examOpts}</select></div>
+      <button class="primary" style="width:100%;padding:11px;margin-top:4px" onclick="startPractice('year')">この回を順番に解く</button>
+    </div>
+    <button class="mode-btn" onclick="startPractice('review')" ${weak ? '' : 'disabled'}>
+      <div class="t">🔁 復習モード ${weak ? `（${weak}問）` : ''}</div>
+      <div class="s">${weak ? '間違えた問題だけを再出題。連続2回正解で克服。' : '間違えた問題はまだありません'}</div></button>`;
+
+  const stats = `<h2>習熟状況</h2><div class="statgrid">
+    <div class="kpi"><div class="v">${seenN}<small>問</small></div><div class="l">挑戦済み</div></div>
+    <div class="kpi"><div class="v" style="color:var(--danger)">${weak}<small>問</small></div><div class="l">弱点（復習対象）</div></div>
+    <div class="kpi"><div class="v" style="color:var(--good)">${masteredN}<small>問</small></div><div class="l">克服</div></div>
+  </div>
+  <div class="hint">解答は自動で学習ログ・グラフに記録されます。<br>${esc(BANK_META.source || '出典: 情報処理推進機構(IPA) 過去問題')}</div>`;
+
+  return `<h1>過去問演習</h1>${menu}${stats}`;
+}
+function pickExam(v) { const [y, t] = v.split('_'); state.pickYear = Number(y); state.pickTerm = t; }
+function startPractice(mode) {
+  let qs;
+  let label;
+  if (mode === 'random') { qs = shuffle(BANK); label = 'ランダム出題'; }
+  else if (mode === 'year') {
+    qs = BANK.filter(q => q.year === state.pickYear && q.term === state.pickTerm);
+    label = examLabel(state.pickYear, state.pickTerm);
+  } else { qs = shuffle(weakList()); label = '復習モード'; }
+  if (!qs.length) { toast('対象の問題がありません'); return; }
+  state.practice = { mode, label, queue: qs.map(q => q.id), idx: 0, picked: null };
+  render();
+}
+function viewQuiz() {
+  const p = state.practice;
+  if (p.idx >= p.queue.length) {
+    return `<h1>${esc(p.label)}</h1><div class="card review-card" style="text-align:center;padding:26px 16px">
+      <div style="font-size:24px;font-weight:800;margin-bottom:6px">🎉 セット完了！</div>
+      <div class="hint">結果はグラフに反映されています。</div>
+      <button class="primary" style="width:100%;padding:13px;margin-top:16px" onclick="endPractice()">演習トップに戻る</button></div>`;
+  }
+  const q = BANK_BY_ID[p.queue[p.idx]];
+  const memo = store.qmemo[q.id] || '';
+  const answered = p.picked != null;
+  const weakPill = isMastered(q.id) ? '<span class="masterpill">克服済</span>' : (isWeak(q.id) ? '<span class="masterpill weak">弱点</span>' : '');
+
+  const meta = `<div class="qmeta"><span class="prog">${p.idx + 1} / ${p.queue.length}</span>${weakPill}</div>
+    <div class="qmeta"><span class="src">${esc(qSource(q))}</span></div>`;
+
+  const keys = ['ア', 'イ', 'ウ', 'エ'];
+  const choices = keys.map(k => {
+    let cls = 'choice';
+    if (answered) {
+      if (k === q.answer) cls += ' correct';
+      else if (k === p.picked) cls += ' wrong';
+      else cls += ' dim';
+    }
+    const oc = answered ? '' : `onclick="answerQuiz('${k}')"`;
+    return `<button class="${cls}" ${oc}><span class="k">${k}</span><span>${esc(q.choices[k] || '')}</span></button>`;
+  }).join('');
+
+  let after = '';
+  if (answered) {
+    const ok = p.picked === q.answer;
+    after = `<div class="verdict ${ok ? 'ok' : 'ng'}">${ok ? '正解 ⭕' : '不正解 ❌'}</div>
+      <div class="ansline">正解: <b>${q.answer}</b></div>
+      <div class="expl"><div class="expl-h">解説</div>${esc(q.explanation || '')}<div class="expl-ai">※この解説はAIが生成したものです。正確さは公式解答例等で確認してください。</div></div>
+      <div class="dojo-row"><a class="dojo-link" href="${dojoUrl(q)}" target="_blank" rel="noopener">道場で照合 ↗</a></div>
+      <div style="margin:8px 0 4px;font-size:12px;color:var(--muted)">メモ（任意）</div>
+      <textarea oninput="setQMemo('${q.id}',this.value)" placeholder="この問題のメモ・覚え方など">${esc(memo)}</textarea>
+      <button class="primary" style="width:100%;padding:13px;margin-top:10px" onclick="nextQuiz()">
+        ${p.idx + 1 >= p.queue.length ? '結果を見る' : '次の問題 →'}</button>`;
+  }
+
+  return `<div style="display:flex;align-items:center;gap:8px;padding:10px 2px">
+      <button onclick="endPractice()" style="padding:6px 10px">‹ 中断</button>
+      <div style="font-weight:700">${esc(p.label)}</div></div>
+    <div class="card">${meta}<div class="qtext">${esc(q.text)}</div>${choices}${after}</div>`;
+}
+function answerQuiz(k) {
+  const p = state.practice; if (!p || p.picked != null) return;
+  const q = BANK_BY_ID[p.queue[p.idx]];
+  p.picked = k;
+  const ok = k === q.answer;
+  applyResult(q.id, ok);
+  recordPracticeAnswer(q.part, ok);
+  save(); render();
+}
+function nextQuiz() { const p = state.practice; if (!p) return; p.idx++; p.picked = null; render(); const m = document.getElementById('main'); if (m) m.scrollTo(0, 0); }
+function setQMemo(qid, v) { const t = (v || '').trim(); if (t) store.qmemo[qid] = t; else delete store.qmemo[qid]; save(); }
+function endPractice() { state.practice = null; render(); }
+
+/* ---- 設定 ---- */
+function viewSettings() {
+  const total = store.logs.reduce((s, l) => s + l.total, 0);
+  const correct = store.logs.reduce((s, l) => s + l.correct, 0);
+  const dleft = daysUntilExam();
+  const weak = weakList().length, mastered = BANK.filter(q => isMastered(q.id)).length;
+  return `<h1>設定</h1>
+  <h2>試験日</h2>
+  <div class="card">
+    <div class="settings-row"><label>試験日</label><input type="date" value="${store.examDate}" onchange="setExamDate(this.value)" style="flex:1"></div>
+    <div class="settings-row"><label>試験名</label><input value="${esc(store.examName)}" onchange="setExamName(this.value)" style="flex:1"></div>
+    <div class="muted-note">現在: 試験まであと <b class="num">${dleft > 0 ? dleft + '日' : dleft === 0 ? '本日' : (-dleft) + '日前'}</b></div>
+    <button class="ghost" style="margin-top:6px" onclick="resetExam()">既定（${DEFAULT_EXAM_DATE}）に戻す</button>
+  </div>
+  <h2>統計</h2>
+  <div class="card">
+    <div class="settings-row"><span>通算学習日数</span><b class="num" style="margin-left:auto">${logDates().length} 日</b></div>
+    <div class="settings-row"><span>連続学習日数</span><b class="num" style="margin-left:auto">🔥 ${currentStreak()} 日</b></div>
+    <div class="settings-row"><span>累計 解答数</span><b class="num" style="margin-left:auto">${correct} / ${total} 問</b></div>
+    <div class="settings-row"><span>演習 弱点 / 克服</span><b class="num" style="margin-left:auto">${weak} / ${mastered} 問</b></div>
+  </div>
+  <h2>収録している過去問</h2>
+  <div class="card">
+    ${BANK_META.exams.map(e => `<div class="settings-row"><span>${esc(e.label)}</span><b class="num" style="margin-left:auto">${e.included} 問</b></div>`).join('') || '<div class="empty">なし</div>'}
+    <div class="muted-note">${esc(BANK_META.source || '')}<br>問題文・選択肢・正解はIPA公開の過去問題／解答例に基づきます（出典明記を条件にIPAが再利用を許諾）。<br>図表・プログラムを含む問題はv1では収録していません。<br><b>解説はAIが生成したものであり、誤りを含む可能性があります。</b>最終確認は公式解答例や過去問道場でお願いします。</div>
+  </div>
+  <h2>データ管理</h2>
+  <div class="card">
+    <div class="rowbtns">
+      <button onclick="exportData()">エクスポート</button>
+      <button onclick="document.getElementById('importFile').click()">インポート</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this)">
+    <button class="danger" style="width:100%;margin-top:8px" onclick="resetProgress()">演習の習熟データをリセット</button>
+    <div class="muted-note">データはこの端末のブラウザ内（localStorage）にのみ保存されます。サーバーには送信されません。機種変更や別端末との共有はエクスポート/インポートで行ってください。</div>
+  </div>
+  <div class="muted-note" style="text-align:center;padding:10px">応用情報 学習記録 · v1<br>${esc(BANK_META.source || '')}</div>`;
+}
+function setExamDate(v) { if (v) { store.examDate = v; save(); render(); } }
+function setExamName(v) { store.examName = (v || '').trim() || DEFAULT_EXAM_NAME; save(); render(); }
+function resetExam() { store.examDate = DEFAULT_EXAM_DATE; store.examName = DEFAULT_EXAM_NAME; save(); render(); toast('既定の試験日に戻しました'); }
+function resetProgress() { if (!confirm('演習の習熟・弱点データを消去します。学習ログは残ります。よろしいですか？')) return; store.mastery = {}; store.qmemo = {}; save(); render(); toast('習熟データをリセットしました'); }
+function exportData() {
+  const blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `ap-study-${todayISO()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('エクスポートしました');
+}
+function importData(input) {
+  const file = input.files && input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.logs)) throw new Error('bad');
+      if (!confirm('現在のデータを上書きしてインポートします。よろしいですか？')) return;
+      store = migrate(data);
+      save(); render(); toast('インポートしました');
+    } catch (e) { alert('読み込めませんでした。エクスポートしたJSONファイルを選んでください。'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+/* ---- トースト ---- */
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast'); if (!t) return;
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+/* ---- ビューポート ---- */
+function fitViewport() {
+  const h = (window.navigator && window.navigator.standalone && window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+  document.documentElement.style.setProperty('--appH', h + 'px');
+}
+
+/* ---- 起動 ---- */
+if (typeof document !== 'undefined' && document.getElementById && document.getElementById('main')) {
+  window.addEventListener('resize', fitViewport);
+  fitViewport();
+  render();
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+/* ---- テスト用エクスポート ---- */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    get store() { return store; }, set store(v) { store = v; },
+    state, defaultStore, migrate,
+    go, render, startAdd, formSet, saveForm, delLog, currentStreak, weekCount, weekCountFn: weekCount,
+    accuracySeries, partAgg, buildChart, logDates, recordPracticeAnswer,
+    calSelect, startAddCal, calMove,
+    masteryOf, isWeak, isMastered, weakList, applyResult,
+    startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl,
+    setExamDate, setExamName, resetExam, resetProgress, daysUntilExam, daysBetween, todayISO, addDays,
+    BANK, BANK_META, BANK_BY_ID, _ls: LS_KEY,
+  };
+}
+</script>
+</body>
+</html>

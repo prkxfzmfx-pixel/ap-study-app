@@ -1,0 +1,7 @@
+# IPA公式PDF（再配布回避・パイプラインで再取得可能）とレンダリング画像（書き起こし用の中間物）
+data/pdf/
+data/img/
+
+# OS
+Thumbs.db
+Desktop.ini

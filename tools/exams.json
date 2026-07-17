@@ -1,0 +1,24 @@
+{
+  "_note": "収録候補の回とIPA公式PDFのURL。回を追加するときはここに1行足して build_exam.py を回す。a=秋(aki), h=春(haru)。",
+  "source": "独立行政法人情報処理推進機構(IPA) 過去問題・解答例",
+  "exams": [
+    { "key": "r6a", "year": 6, "term": "aki",  "label": "令和6年秋",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/m42obm000000afqx-att/2024r06a_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/m42obm000000afqx-att/2024r06a_ap_am_ans.pdf" },
+    { "key": "r6h", "year": 6, "term": "haru", "label": "令和6年春",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/m42obm000000afqx-att/2024r06h_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/m42obm000000afqx-att/2024r06h_ap_am_ans.pdf" },
+    { "key": "r5a", "year": 5, "term": "aki",  "label": "令和5年秋",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/ps6vr70000010d6y-att/2023r05a_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/ps6vr70000010d6y-att/2023r05a_ap_am_ans.pdf" },
+    { "key": "r5h", "year": 5, "term": "haru", "label": "令和5年春",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/ps6vr70000010d6y-att/2023r05h_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/ps6vr70000010d6y-att/2023r05h_ap_am_ans.pdf" },
+    { "key": "r4a", "year": 4, "term": "aki",  "label": "令和4年秋",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000008smf-att/2022r04a_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000008smf-att/2022r04a_ap_am_ans.pdf" },
+    { "key": "r4h", "year": 4, "term": "haru", "label": "令和4年春",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000009sgk-att/2022r04h_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt80000009sgk-att/2022r04h_ap_am_ans.pdf" }
+  ]
+}
