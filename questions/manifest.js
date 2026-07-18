@@ -122,6 +122,26 @@ window.AP_MANIFEST = {
       "included": 73,
       "hasExpl": false,
       "file": "h31h.js"
+    },
+    {
+      "key": "h30a",
+      "year": 30,
+      "term": "aki",
+      "label": "平成30年秋",
+      "total": 80,
+      "included": 71,
+      "hasExpl": false,
+      "file": "h30a.js"
+    },
+    {
+      "key": "h30h",
+      "year": 30,
+      "term": "haru",
+      "label": "平成30年春",
+      "total": 80,
+      "included": 76,
+      "hasExpl": false,
+      "file": "h30h.js"
     }
   ]
 };

@@ -40,6 +40,12 @@
       "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000dict-att/2019r01a_ap_am_ans.pdf" },
     { "key": "h31h", "year": 31, "term": "haru", "label": "平成31年春",
       "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000ddiw-att/2019h31h_ap_am_qs.pdf",
-      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000ddiw-att/2019h31h_ap_am_ans.pdf" }
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000ddiw-att/2019h31h_ap_am_ans.pdf" },
+    { "key": "h30a", "year": 30, "term": "aki",  "label": "平成30年秋",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000f01f-att/2018h30a_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000f01f-att/2018h30a_ap_am_ans.pdf" },
+    { "key": "h30h", "year": 30, "term": "haru", "label": "平成30年春",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000fabr-att/2018h30h_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000fabr-att/2018h30h_ap_am_ans.pdf" }
   ]
 }
