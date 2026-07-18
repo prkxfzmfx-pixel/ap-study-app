@@ -20,7 +20,7 @@ window.AP_MANIFEST = {
       "label": "令和7年春",
       "total": 80,
       "included": 75,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r7h.js"
     },
     {
