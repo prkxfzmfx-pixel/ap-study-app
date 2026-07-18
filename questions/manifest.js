@@ -72,6 +72,16 @@ window.AP_MANIFEST = {
       "included": 77,
       "hasExpl": false,
       "file": "r4a.js"
+    },
+    {
+      "key": "r3a",
+      "year": 3,
+      "term": "aki",
+      "label": "令和3年秋",
+      "total": 80,
+      "included": 74,
+      "hasExpl": false,
+      "file": "r3a.js"
     }
   ]
 };
