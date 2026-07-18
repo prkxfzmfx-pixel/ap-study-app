@@ -32,6 +32,16 @@ window.AP_MANIFEST = {
       "included": 78,
       "hasExpl": true,
       "file": "r6a.js"
+    },
+    {
+      "key": "r6h",
+      "year": 6,
+      "term": "haru",
+      "label": "令和6年春",
+      "total": 80,
+      "included": 76,
+      "hasExpl": false,
+      "file": "r6h.js"
     }
   ]
 };
