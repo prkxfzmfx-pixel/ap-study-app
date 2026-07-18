@@ -59,16 +59,19 @@ function boot() {
 }
 let api = boot();
 
-// 1) 問題バンクの整合性（全問 正解=IPA公式解答例／選択肢4つ／解説あり）
+// 1) 問題バンクの整合性（全問 正解=IPA公式解答例／選択肢4つ／解説は任意=解説なしは正解表示のみで出題）
 assert(api.BANK.length >= 10, '問題バンクが読み込まれている: ' + api.BANK.length);
+let explCount = 0;
 for (const q of api.BANK) {
-  const off = answers['r' + q.year + 'a'].answers[String(q.qnum)];
+  const akey = 'r' + q.year + (q.term === 'aki' ? 'a' : 'h');
+  const off = answers[akey].answers[String(q.qnum)];
   assert.strictEqual(q.answer, off, `正解一致 ${q.id}: bank=${q.answer} official=${off}`);
   assert.deepStrictEqual(Object.keys(q.choices).sort().join(''), 'アイウエ'.split('').sort().join(''), `選択肢ア〜エ ${q.id}`);
-  assert(q.explanation && q.explanation.length >= 40, `解説あり ${q.id}`);
+  assert(q.text && q.text.length >= 5, `問題文あり ${q.id}`);
+  if (q.explanation) { assert(q.explanation.length >= 40, `解説は40字以上 ${q.id}`); explCount++; }
   assert(['ア', 'イ', 'ウ', 'エ'].includes(q.answer), `正解がカナ ${q.id}`);
 }
-console.log(`OK 問題バンク: ${api.BANK.length}問／全問 正解がIPA解答例と一致・選択肢4・解説あり`);
+console.log(`OK 問題バンク: ${api.BANK.length}問／全問 正解がIPA解答例と一致・選択肢4・問題文あり（うち解説あり ${explCount}問）`);
 
 // 2) 全タブが描画される
 for (const t of ['home', 'cal', 'summary', 'practice', 'settings']) {

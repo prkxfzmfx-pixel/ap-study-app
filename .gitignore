@@ -2,6 +2,9 @@
 data/pdf/
 data/img/
 
+# 取得HTMLのローカルキャッシュ（再取得回避のため。IPA著作物の中間物・再配布しない）
+data/cache/
+
 # OS
 Thumbs.db
 Desktop.ini

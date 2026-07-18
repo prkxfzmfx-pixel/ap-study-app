@@ -9,7 +9,7 @@ window.AP_MANIFEST = {
       "term": "aki",
       "label": "令和7年秋",
       "total": 80,
-      "included": 38,
+      "included": 78,
       "hasExpl": true,
       "file": "r7a.js"
     },

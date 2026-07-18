@@ -775,7 +775,7 @@ function viewQuiz() {
     const ok = p.picked === q.answer;
     after = `<div class="verdict ${ok ? 'ok' : 'ng'}">${ok ? '正解 ⭕' : '不正解 ❌'}</div>
       <div class="ansline">正解: <b>${q.answer}</b></div>
-      <div class="expl"><div class="expl-h">解説</div>${esc(q.explanation || '')}<div class="expl-ai">※この解説はAIが生成したものです。正確さは公式解答例等で確認してください。</div></div>
+      ${q.explanation ? `<div class="expl"><div class="expl-h">解説</div>${esc(q.explanation)}<div class="expl-ai">※この解説はAIが生成したものです。正確さは公式解答例等で確認してください。</div></div>` : `<div class="expl expl-none"><div class="expl-h">解説</div><div class="muted-note" style="padding:2px 0">この問題の解説は準備中です。まずは正解と道場の解説で確認してください。</div></div>`}
       <div class="dojo-row"><a class="dojo-link" href="${dojoUrl(q)}" target="_blank" rel="noopener">道場で照合 ↗</a></div>
       <div style="margin:8px 0 4px;font-size:12px;color:var(--muted)">メモ（任意）</div>
       <textarea oninput="setQMemo('${q.id}',this.value)" placeholder="この問題のメモ・覚え方など">${esc(memo)}</textarea>
