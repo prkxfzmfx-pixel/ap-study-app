@@ -50,7 +50,7 @@ window.AP_MANIFEST = {
       "label": "令和5年秋",
       "total": 80,
       "included": 72,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r5a.js"
     },
     {

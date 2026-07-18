@@ -38,8 +38,9 @@
 - **目標**: まず9回（r7a,r7h,r6a,r6h,r5a,r5h,r4a,r3a,r3h＝720問）を解説なしで全収録。**余力があれば全年度（道場収録の平成21春〜最新・約41回3,280問）まで拡張**。古い回で `answers.json` に正解が無い回は、先にIPA解答例PDFから抽出（`build_answers.py`系）。**正解の裏取り不可の回（r4h等ベクター化PDF）は収録見送り・報告**。r4h（令和4春）は除外。
 - **収録状況（manifest.js）— 主要9回は完了・配信確認済み（合計675問）**:
   - r7a 令和7年秋 78問（手起こし38=解説付き＋抽出40）／r7h 令和7年春 75／r6a 令和6年秋 78（手起こし14=解説付き＋抽出64）／r6h 令和6年春 76／r5a 令和5年秋 72／r5h 令和5年春 70／r4a 令和4年秋 77／r3a 令和3年秋 74／r3h 令和3年春 75。
-  - 各回の80問との差＝選択肢自体が図（論理ゲート・composite画像など）の問で自動見送り（合計45問）。解説は52問のみ（手起こし分）、残りは `explanation:""`（正解表示のみで出題・アプリ確認済み）。
-  - **次にやること（優先順）**: ①解説の後続生成（回ごとに `explanation` を埋める）。②**全年度への拡張**（道場収録の平成21春〜、約41回3,280問）。
+  - 各回の80問との差＝選択肢自体が図（論理ゲート・composite画像など）の問で自動見送り（合計45問）。
+  - **解説生成の進捗（フェーズ1）**: r7a・r7h・r6a・r6h の4回は全問解説付き＝完了・push・配信確認済み（4回計307問すべて解説あり）。**残り r5a(72)・r5h(70)・r4a(77)・r3a(74)・r3h(75)＝計368問が解説なし**。回ごとに解説マップJSON→`scratchpad/inject_expl.py <key> <map.json>`（空explanationのみ置換・既存手起こし解説は保護）→ manifest と各.js meta の `hasExpl` を true へ→ verify→smoke→commit→push→配信確認、の順で進める。図表問は `questions/img/<qid>.png` を目視して数値を確認してから書く。
+  - **次にやること（優先順）**: ①解説の後続生成の残り（r5a→r5h→r4a→r3a→r3h）。②**全年度への拡張**（道場収録の平成21春〜、約41回3,280問）。
 - **全年度拡張の未整備事項**: 平成回は `answers.json` に正解が無い。**先にIPA解答例PDFから正解抽出（`build_answers.py`系）が必要**。`tools/exams.json` に対象回のPDF URL登録→答え抽出→`build_from_dojo.py <key>`。**正解の裏取り不可の回（ベクター化PDF等）は収録見送り・報告**。平成キーは `h29h`（平成29春）形式で `build_from_dojo.py` の dojo_dir はそのまま対応（年2桁＋_haru/_aki）。41回規模では初回ロード時間・localStorage容量の実測と、必要なら manifest 遅延ロード化を検討。
 - **1回分の手順**: `python tools/build_from_dojo.py <key>`（既存問は保持し欠けを抽出追記）→ `questions/manifest.js` の該当 `included` を実数へ更新（無い回は exams に1行追加）→ `python tools/verify.py`（解説なしはWARN・OK）→ `node test/smoke.test.js`（全PASS）→ コミット・push・配信確認。**sw.js は編集不要**（ASSETSはアプリシェルのみ＝実行時キャッシュに一本化済み。index.html を変えた時だけ CACHE 数字+1。現在 apstudy-v12）。
 - **画像**: 図表は `#mondai` 内の画像だけを `questions/img/<key>-q<N>.png` に取得（解説の図は取らない）。選択肢自体が図の問題は自動で見送り＆列挙報告。
