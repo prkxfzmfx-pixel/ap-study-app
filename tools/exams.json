@@ -64,6 +64,12 @@
       "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/gmcbt8000000gxj0-att/2015h27a_ap_am_ans.pdf" },
     { "key": "h27h", "year": 27, "term": "haru", "label": "平成27年春",
       "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/ug65p90000000f52-att/2015h27h_ap_am_qs.pdf",
-      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/ug65p90000000f52-att/2015h27h_ap_am_ans.pdf" }
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/ug65p90000000f52-att/2015h27h_ap_am_ans.pdf" },
+    { "key": "h26a", "year": 26, "term": "aki",  "label": "平成26年秋",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/ug65p90000000ye5-att/2014h26a_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/ug65p90000000ye5-att/2014h26a_ap_am_ans.pdf" },
+    { "key": "h26h", "year": 26, "term": "haru", "label": "平成26年春",
+      "qs":  "https://www.ipa.go.jp/shiken/mondai-kaiotu/ug65p90000001dzu-att/2014h26h_ap_am_qs.pdf",
+      "ans": "https://www.ipa.go.jp/shiken/mondai-kaiotu/ug65p90000001dzu-att/2014h26h_ap_am_ans.pdf" }
   ]
 }
