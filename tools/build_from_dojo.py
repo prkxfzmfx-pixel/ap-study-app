@@ -28,6 +28,9 @@ def dojo_dir(key):
     if not m:
         raise SystemExit(f'ABORT: key 形式が不正: {key}（例 r7a, h29h）')
     _, yr, tm = m.groups()
+    # 平成23年は東日本大震災で春が特別試験となり、道場は 23_toku を用いる。
+    if key == 'h23h':
+        return '23_toku'
     return f'{int(yr):02d}_{"aki" if tm == "a" else "haru"}'
 
 

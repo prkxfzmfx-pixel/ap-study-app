@@ -628,12 +628,18 @@ function startYearReview(year, term) {
 
 /* ============ 演習（過去問・アプリ内完結） ============ */
 function shuffle(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
-function examLabel(year, term) { return `令和${year}年${term === 'aki' ? '秋' : '春'}`; }
+// 収録は令和1〜7年と平成21〜31年。year>=21を平成、それ未満を令和とし、令和1年は「元年」表記にする。
+function examLabel(year, term) {
+  const g = year >= 21 ? '平成' : '令和';
+  const y = year === 1 ? '元' : year;
+  return `${g}${y}年${term === 'aki' ? '秋' : '春'}`;
+}
 function qSource(q) { return `出典: ${examLabel(q.year, q.term)} 応用情報技術者試験 ${q.part === 'am' ? '午前' : '午後'}問題（IPA）`; }
 // 過去問道場（応用情報技術者試験.com）の該当ページURL。照合用の外部リンクのみ（スクレイピング・自動ログインはしない）。
 // ディレクトリコードは「元号内の年を2桁ゼロ埋め＋_haru/_aki」。令和6年秋=06_aki, 平成29年春=29_haru。
+// 平成23年は東日本大震災で春が特別試験となり道場は 23_toku を用いる。
 function dojoUrl(q) {
-  const dir = `${String(q.year).padStart(2, '0')}_${q.term}`;
+  const dir = (q.year === 23 && q.term === 'haru') ? '23_toku' : `${String(q.year).padStart(2, '0')}_${q.term}`;
   return q.part === 'am'
     ? `https://www.ap-siken.com/kakomon/${dir}/q${q.qnum}.html`
     : `https://www.ap-siken.com/kakomon/${dir}/pm${String(q.qnum).padStart(2, '0')}.html`;

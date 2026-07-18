@@ -133,7 +133,14 @@ console.log('OK 復習モード: 弱点のみ出題');
 assert.strictEqual(api.dojoUrl({ year: 6, term: 'aki', part: 'am', qnum: 10 }), 'https://www.ap-siken.com/kakomon/06_aki/q10.html', '午前URL');
 assert.strictEqual(api.dojoUrl({ year: 6, term: 'aki', part: 'pm', qnum: 1 }), 'https://www.ap-siken.com/kakomon/06_aki/pm01.html', '午後URL');
 assert.strictEqual(api.dojoUrl({ year: 29, term: 'haru', part: 'am', qnum: 5 }), 'https://www.ap-siken.com/kakomon/29_haru/q5.html', '平成29春URL');
-console.log('OK 道場URL形式: 令和6秋q10 / 午後pm01 / 平成29春q5');
+assert.strictEqual(api.dojoUrl({ year: 23, term: 'haru', part: 'am', qnum: 1 }), 'https://www.ap-siken.com/kakomon/23_toku/q1.html', '平成23春は特別(23_toku)');
+console.log('OK 道場URL形式: 令和6秋q10 / 午後pm01 / 平成29春q5 / 平成23春=23_toku');
+// 8b) 元号ラベル（令和/平成・元年表記）
+assert.strictEqual(api.examLabel(1, 'aki'), '令和元年秋', '令和元年秋ラベル');
+assert.strictEqual(api.examLabel(6, 'aki'), '令和6年秋', '令和6年秋ラベル');
+assert.strictEqual(api.examLabel(31, 'haru'), '平成31年春', '平成31年春ラベル');
+assert.strictEqual(api.examLabel(23, 'haru'), '平成23年春', '平成23年春ラベル');
+console.log('OK 元号ラベル: 令和元年/令和6年/平成31年/平成23年');
 
 // 9) 解説がUI（結果画面）に表示される
 api.resetProgress();
