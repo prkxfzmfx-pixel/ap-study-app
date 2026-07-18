@@ -31,16 +31,20 @@
 7. グラフ色は検証済みパレット（午前=blue #2a78d6 / 午後=orange #eb6834、ダーク別調整）。合格ライン60%の破線を維持。色を足すときは凡例・ラベルを必ず併記。
 8. 新しいファイルを追加したら `sw.js` の `ASSETS` に追記し、`CACHE` 名の数字を+1する（apstudy-v2 → v3）。
 
-## 🔖 次回の再開メモ（5年度分・約10回への収録拡充：作業途中）
+## 🔖 次回の再開メモ（過去問の大量収録：道場抽出パイプライン運用中）
 
-- **目標**: 令和3〜7年度の午前 約10回（各80問）を収録。`tools/exams.json` に10回分のIPA PDF URL登録済み。**新しい回から順**（r7a→r7h→r6a残り→r6h→r5a→r5h→r4a→r3a→r3h）。r4h（令和4春）は解答例PDFがベクター化で抽出不可のため除外。
-- **現在の収録（manifest.js）**:
-  - **r7a（令和7年秋）: 18問収録済み＝問3〜20**（全問解説あり／図表4問=問10波形・問15ジョブ表・問19キャッシュ表・問20LED回路を画像収録）。**未収録=問1,2,21〜80**。← 次はここから（問21〜、問1,2はp3〜4を確認）
-  - **r6a（令和6年秋）: 14問**（問4,6〜13,57〜59,68,69。全問解説あり／図表なし）。**未収録=それ以外**。
-- **答えは9回分検証済み**: `data/answers.json` に r7a,r7h,r6a,r6h,r5a,r5h,r4a,r3a,r3h（各80問）。`tools/verify.py` で連番・ア〜エ・収録問との一致・img存在を検証。
-- **画像対応は完成**: `img`フィールド＋`.qimg`表示＋`crop_fig.py`切り出し＋`verify.py`検証まで動作。ブラウザ実機で図表表示確認済み。
-- **再開手順**: `data/img/r7a/pNN.png`（生成済み。無ければ `python tools/build_exam.py r7a`）を目視で `questions/r7a.js` に追記（問16〜。問1,2はp5より前のページを確認）。図表は `python tools/crop_fig.py r7a <page> <fx0> <fy0> <fx1> <fy1> r7a-qN` → `"hasImage":true,"img":"questions/img/r7a-qN.png"`。正解は `data/answers.json` の r7a。解説は正解肢2〜3文＋誤答各1文。→ manifestの `included` 更新＋sw.js の ASSETS に画像追加＋**CACHE+1（現在 apstudy-v9）** → `verify.py`＆`node test/smoke.test.js` → コミット・push・配信確認。
-- r7aが埋まったら r7h→r6a残り→… と継続。**重ければ「問題＋正解のみ先行（解説なしでも正解表示のみで動く）」でよい**。テストは manifest 駆動なので回追加時は原則テスト変更不要（年度固有の件数を見る一部assertは調整済み）。
+- **方針転換済み（ユーザー/コーディネーター合意）**: 目視書き起こしから **`tools/build_from_dojo.py` による自動抽出**へ移行。過去問道場ページからIPA著作物（問題文・選択肢・問題の図表）のみを取得し、道場の解説文(#kaisetsu)・独自コンテンツは**取得しない**。解説は自前生成（後続）。アプリのIPA出典明記は維持。
+- **厳守条件（ツールが自動遵守／破れたら中止報告）**: 2秒以上間隔・逐次（並列禁止）・`data/cache/`（gitignore）にHTMLキャッシュし再取得しない・**HTTP 200以外（403/429含む）で即中止・回避策を講じない**・正解は `data/answers.json`（IPA由来）。robots.txt はAI学習用4UA(GPTBot等)を`Disallow:/`、`User-agent:*`規則なし・対象パス制限なし（確認済み）。
+- **目標**: まず9回（r7a,r7h,r6a,r6h,r5a,r5h,r4a,r3a,r3h＝720問）を解説なしで全収録。**余力があれば全年度（道場収録の平成21春〜最新・約41回3,280問）まで拡張**。古い回で `answers.json` に正解が無い回は、先にIPA解答例PDFから抽出（`build_answers.py`系）。**正解の裏取り不可の回（r4h等ベクター化PDF）は収録見送り・報告**。r4h（令和4春）は除外。
+- **収録状況（manifest.js）**:
+  - **r7a（令和7年秋）: 78問**（手起こし38問=解説付き＋抽出40問=解説なし。図表計11問）。問22・問41は選択肢が図（論理ゲート等）のため見送り。← ここまで完了・配信確認済み
+  - **r6a（令和6年秋）: 14問**（手起こし・解説付き）。← 次は `build_from_dojo.py r6a` で80問化
+  - 次の順: **r7h → r6a（残り）→ r6h → r5a → r5h → r4a → r3a → r3h**（新しい順）。answers.json に既に9回分あり。
+- **1回分の手順**: `python tools/build_from_dojo.py <key>`（既存問は保持し欠けを抽出追記）→ `questions/manifest.js` の該当 `included` を実数へ更新（無い回は exams に1行追加）→ `python tools/verify.py`（解説なしはWARN・OK）→ `node test/smoke.test.js`（全PASS）→ コミット・push・配信確認。**sw.js は編集不要**（ASSETSはアプリシェルのみ＝実行時キャッシュに一本化済み。index.html を変えた時だけ CACHE 数字+1。現在 apstudy-v12）。
+- **画像**: 図表は `#mondai` 内の画像だけを `questions/img/<key>-q<N>.png` に取得（解説の図は取らない）。選択肢自体が図の問題は自動で見送り＆列挙報告。
+- **解説の後続追加**: 解説なし問題は `explanation:""`。アプリは正解表示＋「解説は準備中」で正しく動く（確認済み）。後続バッチで回ごとに解説生成→`explanation`を埋める。
+- **パフォーマンス（41回規模想定）**: SWは実行時キャッシュ化済み。manifestは全回を `document.write` で逐次ロード。要監視: localStorage(`apstudy.v1`)容量・年度別タブの表示件数・初回ロード時間。大規模化で問題が出たら manifest 分割ロードや遅延ロードを検討（未対応）。
+- **テスト注意**: smokeは春秋(term)で answers キーを出し分け済み（`r{year}{a|h}`）。解説は任意（あれば40字以上）。年度固有件数のassertは調整済み。
 
 ## 過去問の回を追加する手順
 
