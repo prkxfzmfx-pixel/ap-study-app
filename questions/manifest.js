@@ -70,7 +70,7 @@ window.AP_MANIFEST = {
       "label": "令和4年秋",
       "total": 80,
       "included": 77,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r4a.js"
     },
     {
