@@ -57,7 +57,7 @@ def extract_register(js):
 
 def load_question_files():
     qdir = os.path.join(ROOT, 'questions')
-    files = [f for f in os.listdir(qdir) if re.match(r'r\d', f) and f.endswith('.js')]
+    files = [f for f in os.listdir(qdir) if re.match(r'[rh]\d', f) and f.endswith('.js')]
     banks = {}
     for f in files:
         js = io.open(os.path.join(qdir, f), encoding='utf-8').read()

@@ -63,7 +63,7 @@ let api = boot();
 assert(api.BANK.length >= 10, '問題バンクが読み込まれている: ' + api.BANK.length);
 let explCount = 0;
 for (const q of api.BANK) {
-  const akey = 'r' + q.year + (q.term === 'aki' ? 'a' : 'h');
+  const akey = q.id.replace(/-q\d+$/, '');  // 問IDから回キーを取得（令和r/平成h両対応）
   const off = answers[akey].answers[String(q.qnum)];
   assert.strictEqual(q.answer, off, `正解一致 ${q.id}: bank=${q.answer} official=${off}`);
   assert.deepStrictEqual(Object.keys(q.choices).sort().join(''), 'アイウエ'.split('').sort().join(''), `選択肢ア〜エ ${q.id}`);
