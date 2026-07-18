@@ -82,6 +82,16 @@ window.AP_MANIFEST = {
       "included": 74,
       "hasExpl": false,
       "file": "r3a.js"
+    },
+    {
+      "key": "r3h",
+      "year": 3,
+      "term": "haru",
+      "label": "令和3年春",
+      "total": 80,
+      "included": 75,
+      "hasExpl": false,
+      "file": "r3h.js"
     }
   ]
 };
