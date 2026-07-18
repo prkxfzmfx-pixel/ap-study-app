@@ -4,6 +4,16 @@ window.AP_MANIFEST = {
   "base": "questions/",
   "exams": [
     {
+      "key": "r7a",
+      "year": 7,
+      "term": "aki",
+      "label": "令和7年秋",
+      "total": 80,
+      "included": 13,
+      "hasExpl": true,
+      "file": "r7a.js"
+    },
+    {
       "key": "r6a",
       "year": 6,
       "term": "aki",
