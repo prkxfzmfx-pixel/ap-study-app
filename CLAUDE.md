@@ -34,11 +34,13 @@
 ## 🔖 次回の再開メモ（5年度分・約10回への収録拡充：作業途中）
 
 - **目標**: 令和3〜7年度の午前 約10回（各80問）を収録。`tools/exams.json` に10回分のIPA PDF URL登録済み。**新しい回から順**（r7a→r7h→r6a残り→r6h→r5a→r5h→r4a→r3a→r3h）。r4h（令和4春）は解答例PDFがベクター化で抽出不可のため除外。
-- **現在の収録**: `questions/manifest.js` は **r6a（令和6年秋・14問／全問解説あり／図表なし）のみ**。これが唯一アプリに出る完成データ。
-- **答えは9回分検証済み**: `data/answers.json` に r7a,r7h,r6a,r6h,r5a,r5h,r4a,r3a,r3h（各80問）を抽出済み。`tools/verify.py` で連番・ア〜エ・収録問との一致を検証済み。
-- **画像対応は実装完了**: 図表つき問題は `img` フィールド＋`.qimg`表示＋`crop_fig.py`切り出し＋`verify.py`のimg存在チェックまで通る。R6秋の図表問題（例: 問5=2分探索木, 問14=信頼性ブロック図）も今後この方式で追加できる。
-- **再開はここから**: `python tools/build_exam.py r7a`（実行済み・`data/img/r7a/pNN.png` 生成済み）→ `data/img/r7a/pNN.png` を目視で `questions/r7a.js`（`AP_REGISTER`）へ書き起こし。図表問題は `crop_fig.py r7a <page> <fx0> <fy0> <fx1> <fy1> r7a-qN`。正解は `data/answers.json` の r7a を使用。解説は「正解肢2〜3文＋誤答肢各1文」。書けたら manifest に r7a 追加＋sw.js の ASSETS に `questions/r7a.js`（＋使う画像）追加＋CACHE+1 → `verify.py`＆テスト → **1回完成ごとにコミット・push・配信確認**。
-- **重い場合**: 「問題＋正解だけ先に（解説なし＝正解表示のみで解ける挙動は実装済み）」で公開し、解説は後続バッチで。
+- **現在の収録（manifest.js）**:
+  - **r7a（令和7年秋）: 13問収録済み＝問3〜15**（全問解説あり／図表2問=問10波形・問15ジョブ表を画像収録）。**未収録=問1,2,16〜80**。← 次はここから（問16〜）
+  - **r6a（令和6年秋）: 14問**（問4,6〜13,57〜59,68,69。全問解説あり／図表なし）。**未収録=それ以外**。
+- **答えは9回分検証済み**: `data/answers.json` に r7a,r7h,r6a,r6h,r5a,r5h,r4a,r3a,r3h（各80問）。`tools/verify.py` で連番・ア〜エ・収録問との一致・img存在を検証。
+- **画像対応は完成**: `img`フィールド＋`.qimg`表示＋`crop_fig.py`切り出し＋`verify.py`検証まで動作。ブラウザ実機で図表表示確認済み。
+- **再開手順**: `data/img/r7a/pNN.png`（生成済み。無ければ `python tools/build_exam.py r7a`）を目視で `questions/r7a.js` に追記（問16〜。問1,2はp5より前のページを確認）。図表は `python tools/crop_fig.py r7a <page> <fx0> <fy0> <fx1> <fy1> r7a-qN` → `"hasImage":true,"img":"questions/img/r7a-qN.png"`。正解は `data/answers.json` の r7a。解説は正解肢2〜3文＋誤答各1文。→ manifestの `included` 更新＋sw.js の ASSETS に画像追加＋**CACHE+1（現在 apstudy-v9）** → `verify.py`＆`node test/smoke.test.js` → コミット・push・配信確認。
+- r7aが埋まったら r7h→r6a残り→… と継続。**重ければ「問題＋正解のみ先行（解説なしでも正解表示のみで動く）」でよい**。テストは manifest 駆動なので回追加時は原則テスト変更不要（年度固有の件数を見る一部assertは調整済み）。
 
 ## 過去問の回を追加する手順
 

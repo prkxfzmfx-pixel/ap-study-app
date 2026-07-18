@@ -1,8 +1,9 @@
 // ネットワーク優先・失敗時キャッシュ（オフラインでも起動できるように）
-const CACHE = 'apstudy-v9';
+const CACHE = 'apstudy-v10';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
   './questions/manifest.js', './questions/r6a.js', './questions/r7a.js',
   './questions/img/r7a-q10.png', './questions/img/r7a-q15.png',
+  './questions/img/r7a-q19.png', './questions/img/r7a-q20.png',
   './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
