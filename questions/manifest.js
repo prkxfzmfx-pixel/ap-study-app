@@ -60,7 +60,7 @@ window.AP_MANIFEST = {
       "label": "令和5年春",
       "total": 80,
       "included": 70,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r5h.js"
     },
     {
