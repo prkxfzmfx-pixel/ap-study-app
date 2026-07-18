@@ -138,12 +138,21 @@ console.log('OK 道場URL形式: 令和6秋q10 / 午後pm01 / 平成29春q5');
 // 9) 解説がUI（結果画面）に表示される
 api.resetProgress();
 api.pickExam('6_aki'); api.startPractice('year'); api.go('practice');
-const q9 = api.BANK_BY_ID[api.state.practice.queue[0]];
+const p9 = api.state.practice;
+const q9 = p9.queue.map(id => api.BANK_BY_ID[id]).find(q => q.explanation); // 解説ありの問を選ぶ
+p9.idx = p9.queue.indexOf(q9.id); p9.picked = null; api.render();
 api.answerQuiz(['ア', 'イ', 'ウ', 'エ'].find(k => k !== q9.answer));  // 不正解でも正解＋解説が出る
 assert(elements.main.innerHTML.includes('解説') && elements.main.innerHTML.includes('AIが生成'), '結果画面に解説＋AI注記');
 assert(elements.main.innerHTML.includes('道場で照合'), '結果画面に道場照合リンク');
+// 解説なし問題は「準備中」プレースホルダを表示（AI注記は出さない）
+const qn = p9.queue.map(id => api.BANK_BY_ID[id]).find(q => !q.explanation);
+if (qn) {
+  p9.idx = p9.queue.indexOf(qn.id); p9.picked = null; api.render();
+  api.answerQuiz(qn.answer);
+  assert(elements.main.innerHTML.includes('解説は準備中') && !elements.main.innerHTML.includes('AIが生成'), '解説なし問はプレースホルダ表示');
+}
 api.endPractice();
-console.log('OK 解説UI表示＋AI生成の注記');
+console.log('OK 解説UI表示＋AI生成の注記／解説なしはプレースホルダ');
 
 // 10) 設定に AI解説の免責＋出典、クラウド自動バックアップUI、収録一覧は撤去
 api.go('settings');
