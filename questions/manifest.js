@@ -42,6 +42,16 @@ window.AP_MANIFEST = {
       "included": 76,
       "hasExpl": false,
       "file": "r6h.js"
+    },
+    {
+      "key": "r5a",
+      "year": 5,
+      "term": "aki",
+      "label": "令和5年秋",
+      "total": 80,
+      "included": 72,
+      "hasExpl": false,
+      "file": "r5a.js"
     }
   ]
 };
