@@ -14,6 +14,16 @@ window.AP_MANIFEST = {
       "file": "r7a.js"
     },
     {
+      "key": "r7h",
+      "year": 7,
+      "term": "haru",
+      "label": "令和7年春",
+      "total": 80,
+      "included": 75,
+      "hasExpl": false,
+      "file": "r7h.js"
+    },
+    {
       "key": "r6a",
       "year": 6,
       "term": "aki",
