@@ -52,6 +52,16 @@ window.AP_MANIFEST = {
       "included": 72,
       "hasExpl": false,
       "file": "r5a.js"
+    },
+    {
+      "key": "r5h",
+      "year": 5,
+      "term": "haru",
+      "label": "令和5年春",
+      "total": 80,
+      "included": 70,
+      "hasExpl": false,
+      "file": "r5h.js"
     }
   ]
 };
