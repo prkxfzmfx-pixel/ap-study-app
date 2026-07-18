@@ -80,7 +80,7 @@ window.AP_MANIFEST = {
       "label": "令和3年秋",
       "total": 80,
       "included": 74,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r3a.js"
     },
     {
