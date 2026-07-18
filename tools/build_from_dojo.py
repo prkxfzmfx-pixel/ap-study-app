@@ -123,7 +123,8 @@ def main():
     ddir = dojo_dir(key)
     term = 'aki' if key[-1] == 'a' else 'haru'
     year = int(re.match(r'^[rh](\d+)[ah]$', key).group(1))
-    label = f'令和{year}年{"秋" if term=="aki" else "春"}' if key[0] == 'r' else f'平成{year}年{"秋" if term=="aki" else "春"}'
+    gengo_yr = '元' if year == 1 else str(year)
+    label = f'令和{gengo_yr}年{"秋" if term=="aki" else "春"}' if key[0] == 'r' else f'平成{gengo_yr}年{"秋" if term=="aki" else "春"}'
 
     answers = json.load(io.open(os.path.join(ROOT, 'data', 'answers.json'), encoding='utf-8'))
     if key not in answers:
