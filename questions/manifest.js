@@ -90,7 +90,7 @@ window.AP_MANIFEST = {
       "label": "令和3年春",
       "total": 80,
       "included": 75,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r3h.js"
     }
   ]
