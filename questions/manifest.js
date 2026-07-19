@@ -260,7 +260,7 @@ window.AP_MANIFEST = {
       "label": "平成24年春",
       "total": 80,
       "included": 76,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "h24h.js"
     },
     {
