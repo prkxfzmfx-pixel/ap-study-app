@@ -145,8 +145,8 @@ window.AP_REGISTER(
   "hasImage": true,
   "text": "同じ命令セットをもつコンピュータAとBがある。それぞれのCPUクロック周期，及びあるプログラムを実行したときのCPI(Cycles Per Instruction)は，表のとおりである。そのプログラムを実行したとき，コンピュータAの処理時間は，コンピュータBの処理時間の何倍になるか。\n[[img:questions/img/h22h-q10.png]]",
   "choices": {
-   "ア": "1",
-   "イ": "1",
+   "ア": "（1）/（32）",
+   "イ": "（1）/（2）",
    "ウ": "2",
    "エ": "8"
   },
@@ -547,10 +547,10 @@ window.AP_REGISTER(
   "hasImage": true,
   "text": "表Aから実行結果Bを得るためのSQL文はどれか。\n[[img:questions/img/h22h-q33.png]]",
   "choices": {
-   "ア": "SELECT 部署コード，社員コード，名前 FROM A GROUP BY 社員コード",
-   "イ": "SELECT 部署コード，社員コード，名前 FROM A GROUP BY 部署コード",
-   "ウ": "SELECT 部署コード，社員コード，名前 FROM A ORDER BY 社員コード，部署コード",
-   "エ": "SELECT 部署コード，社員コード，名前 FROM A ORDER BY 部署コード，社員コード"
+   "ア": "SELECT 部署コード，社員コード，名前 FROM A\nGROUP BY 社員コード",
+   "イ": "SELECT 部署コード，社員コード，名前 FROM A\nGROUP BY 部署コード",
+   "ウ": "SELECT 部署コード，社員コード，名前 FROM A\nORDER BY 社員コード，部署コード",
+   "エ": "SELECT 部署コード，社員コード，名前 FROM A\nORDER BY 部署コード，社員コード"
   },
   "explanation": "",
   "img": "questions/img/h22h-q33.png"

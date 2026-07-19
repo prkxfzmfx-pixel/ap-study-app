@@ -53,10 +53,10 @@ window.AP_REGISTER(
   "hasImage": false,
   "text": "製品100個を1ロットとして生産する。一つのロットからサンプルを3個抽出して検査し，3個とも良品であればロット全体を合格とする。100個中に10個の不良品を含むロットが合格と判定される確率は幾らか。",
   "choices": {
-   "ア": "178",
-   "イ": "405",
-   "ウ": "89",
-   "エ": "87"
+   "ア": "（178）/（245）",
+   "イ": "（405）/（539）",
+   "ウ": "（89）/（110）",
+   "エ": "（87）/（97）"
   },
   "explanation": "正解はア。3個とも良品となる確率は、良品90個・不良10個から順に引くと(90/100)×(89/99)×(88/98)＝178/245（約0.73）。この値がアに一致する。イ・ウ・エは分母・分子の個数の取り方を誤ったもの。"
  },
@@ -252,12 +252,12 @@ window.AP_REGISTER(
   "hasImage": false,
   "text": "あるシステムにおいて，MTBFとMTTRがともに1.5倍になったとき，アベイラビリティ(稼働率)は何倍になるか。",
   "choices": {
-   "ア": "2",
+   "ア": "（2）/（3）",
    "イ": "1.5",
    "ウ": "2.25",
    "エ": "変わらない"
   },
-  "explanation": "正解はエ。稼働率＝MTBF/(MTBF＋MTTR)。MTBFとMTTRをともに1.5倍にすると、分子・分母がともに1.5倍になり比は変わらないので、稼働率は変わらない。ア2・イ1.5・ウ2.25はスケール倍率をそのまま稼働率の倍率と誤ったもの。"
+  "explanation": "正解はエ。稼働率＝MTBF/(MTBF＋MTTR)。MTBFとMTTRをともに1.5倍にすると、分子・分母がともに1.5倍になり比は変わらないので、稼働率は変わらない。ア（2/3）・イ1.5・ウ2.25は、スケール倍率や比の変化を稼働率の倍率と取り違えたもの。"
  },
  {
   "id": "r4a-q15",
@@ -596,10 +596,10 @@ window.AP_REGISTER(
   "hasImage": false,
   "text": "次のURLに対し，受理するWebサーバのポート番号(8080)を指定できる箇所はどれか。\nhttps://www.example.com/member/login?id=user",
   "choices": {
-   "ア": "クエリ文字列(id=user)の直後 https://www.example.com/member/login?id=user:8080",
-   "イ": "スキーム(https)の直後 https:8080://www.example.com/member/login?id=user",
-   "ウ": "パス(/member/login)の直後 https://www.example.com/member/login:8080?id=user",
-   "エ": "ホスト名(www.example.com)の直後 https://www.example.com:8080/member/login?id=user"
+   "ア": "クエリ文字列(id=user)の直後\nhttps://www.example.com/member/login?id=user:8080",
+   "イ": "スキーム(https)の直後\nhttps:8080://www.example.com/member/login?id=user",
+   "ウ": "パス(/member/login)の直後\nhttps://www.example.com/member/login:8080?id=user",
+   "エ": "ホスト名(www.example.com)の直後\nhttps://www.example.com:8080/member/login?id=user"
   },
   "explanation": "正解はエ。URLでポート番号は、ホスト名の直後にコロンで続けて指定する（例：www.example.com:8080）。ア：クエリ文字列の直後、イ：スキームの直後、ウ：パスの直後はいずれもポート番号の指定位置として正しくない。"
  },

@@ -65,12 +65,23 @@ def decode(b):
     return b.decode('utf-8', 'replace')
 
 
+def _ol_chars(text):
+    return ''.join(c + '̅' for c in text)
+
+
 def ol_repl(s):
-    """<span class="ol">X</span> を各文字への上線（結合上線 U+0305）に変換して span を除去。"""
-    def f(m):
-        inner = re.sub(r'<[^>]+>', '', m.group(1))
-        return ''.join(c + '̅' for c in inner)
-    return re.sub(r'<span class="ol">(.*?)</span>', f, s, flags=re.S)
+    """道場の上線表記を復元する。
+    <span class="ol">X</span>   … 各文字の上線（結合上線 U+0305）＝1文字/短い否定。
+    <span class="dol">X</span>  … 式全体を覆う上線（否定バー）。内側のolを処理して ¬(...) に変換する。
+    dolを先に処理（内部にolを含むため）。"""
+    def f_dol(m):
+        inner = re.sub(r'<span class="ol">([^<]*)</span>', lambda mm: _ol_chars(mm.group(1)), m.group(1), flags=re.S)
+        inner = re.sub(r'<[^>]+>', '', inner)
+        return '¬(' + inner + ')'
+    # dol: 内部にol1つを許すバランス的マッチ
+    s = re.sub(r'<span class="dol">((?:[^<]|<span class="ol">[^<]*</span>)*)</span>', f_dol, s, flags=re.S)
+    s = re.sub(r'<span class="ol">(.*?)</span>', lambda m: _ol_chars(re.sub(r'<[^>]+>', '', m.group(1))), s, flags=re.S)
+    return s
 
 
 def _frac_repl(m):
@@ -124,6 +135,42 @@ def extract_div(html, marker):
             depth -= 1
             j = nc + 6
     return html[open_end:j - 6]
+
+
+def extract_span(html, marker):
+    """<span ... marker ...> ... </span> をネスト対応でバランス抽出する（分数<span class="frac"><span>..</span>..</span>対応）。"""
+    i = html.find(marker)
+    if i < 0:
+        return None
+    open_end = html.find('>', i) + 1
+    depth, j = 1, open_end
+    while j < len(html) and depth > 0:
+        nd = html.find('<span', j)
+        nc = html.find('</span>', j)
+        if nc < 0:
+            break
+        if 0 <= nd < nc:
+            depth += 1
+            j = nd + 5
+        else:
+            depth -= 1
+            j = nc + 7
+    return html[open_end:j - 7]
+
+
+def extract_choices(html_ol):
+    """選択肢ア〜エを抽出。ネストspan（分数）に対応。画像を含む選択肢は None（＝図選択肢）を返す。
+    戻り値: (dict or None, img_choice(bool))"""
+    ch = {}
+    img_choice = False
+    for sfx, kana in (('a', 'ア'), ('i', 'イ'), ('u', 'ウ'), ('e', 'エ')):
+        inner = extract_span(html_ol, f'id="select_{sfx}"')
+        if inner is None:
+            return None, False
+        if re.search(r'<img[^>]*src="[^"]+\.(png|gif|jpg|jpeg)"', inner, re.I):
+            img_choice = True
+        ch[kana] = strip_tags(inner)
+    return ch, img_choice
 
 
 def imgs_in(s):
@@ -231,18 +278,8 @@ def main():
             skipped.append((n, '問題文が空'))
             continue
 
-        # 選択肢
-        ch = {}
-        img_choice = False
-        for sfx, kana in (('a', 'ア'), ('i', 'イ'), ('u', 'ウ'), ('e', 'エ')):
-            m = re.search(r'<span id="select_%s">(.*?)</span>' % sfx, html_ol, re.S)
-            if not m:
-                ch = None
-                break
-            inner = m.group(1)
-            if '<img' in inner:
-                img_choice = True
-            ch[kana] = strip_tags(inner)
+        # 選択肢（ネストspan＝分数に対応した抽出）
+        ch, img_choice = extract_choices(html_ol)
         if ch is None or img_choice or any(not v for v in ch.values()):
             skipped.append((n, '選択肢が図/空（画像選択肢のため見送り）'))
             continue

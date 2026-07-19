@@ -45,6 +45,7 @@ def main():
         files = [f for f in files if f[:-3] in keys]
     changed_total = 0
     big_diffs = []
+    choice_diffs = []
     missing_cache = []
     for f in sorted(files):
         key = f[:-3]
@@ -64,6 +65,12 @@ def main():
             newtext, imgs = bd.build_mondai(mondai, key, n, ddir, allow_net=True)
             if not newtext:
                 continue
+            # 選択肢も再抽出（分数などネストspanの切れを修正）。有効な4肢のときだけ更新。
+            newch, img_choice = bd.extract_choices(html)
+            if newch and not img_choice and all(newch.values()) and newch != q.get('choices'):
+                q['choices'] = newch
+                nchanged += 1
+                choice_diffs.append(f'{key}-q{n}')
             old = q.get('text', '')
             if newtext != old:
                 # 変化量（正規化して空白差だけの微差は無視）
@@ -84,7 +91,9 @@ def main():
         write_js(os.path.join(qdir, f), meta, qs, meta.get('label', key))
         changed_total += nchanged
         print(f'{key}: 問題文更新 {nchanged}問 / 全{len(qs)}問')
-    print(f'\n=== 合計 {changed_total}問の問題文を更新 ===')
+    print(f'\n=== 合計 {changed_total}箇所（問題文＋選択肢）を更新 ===')
+    if choice_diffs:
+        print(f'選択肢を修正した問題 {len(choice_diffs)}件:', choice_diffs)
     if missing_cache:
         print(f'キャッシュ無し {len(missing_cache)}問:', missing_cache[:10])
     # 内容が変わった（空白以外）問題を変化量順に
