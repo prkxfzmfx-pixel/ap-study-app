@@ -226,7 +226,10 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .choice {
   display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left;
   padding: 12px; margin-bottom: 8px; border-radius: 12px; line-height: 1.6;
+  -webkit-user-select: text; user-select: text;
 }
+/* 選択肢の本文（記号kを除く）は範囲選択・コピー可能にする。タップ判定はonclickで動作する。 */
+.choice > span:not(.k) { -webkit-user-select: text; user-select: text; cursor: text; }
 .choice .k { font-weight: 800; flex-shrink: 0; width: 1.4em; }
 .choice.correct { background: var(--good-bg); border-color: var(--good); }
 .choice.wrong { background: var(--danger-bg); border-color: var(--danger); }
