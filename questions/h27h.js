@@ -393,7 +393,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "ウ",
   "hasImage": true,
-  "text": "\"電話番号\"列にNULLを含む\"取引先\"表に対して，SQL文を実行した結果の行数は幾つか。\n[[img:questions/img/h27h-q26.png]]\n〔SQL文〕\nSELECT * FROM 取引先 WHERE 電話番号 NOT LIKE '010%'",
+  "text": "\"電話番号\"列にNULLを含む\"取引先\"表に対して，SQL文を実行した結果の行数は幾つか。\n[[img:questions/img/h27h-q26.png]]\n〔SQL文〕\n[[code:SELECT * FROM 取引先 WHERE 電話番号 NOT LIKE '010%']]",
   "choices": {
    "ア": "1",
    "イ": "2",
@@ -430,7 +430,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "イ",
   "hasImage": true,
-  "text": "\"学生\"表が次のSQL文で定義されているとき，検査制約の違反となるSQL文はどれか。\nCREATE TABLE 学生 (\n学生番号 CHAR(5) PRIMARY KEY,\n学生名 CHAR(16),\n学部コード CHAR(4),\n住所 CHAR(16),\nCHECK (学生番号 LIKE 'K%'))\n[[img:questions/img/h27h-q28.png]]",
+  "text": "\"学生\"表が次のSQL文で定義されているとき，検査制約の違反となるSQL文はどれか。\n[[code:CREATE TABLE 学生 (\n　学生番号 CHAR(5) PRIMARY KEY,\n　学生名　CHAR(16),\n　学部コード CHAR(4),\n　住所 CHAR(16),\n　CHECK (学生番号 LIKE 'K%'))]]\n[[img:questions/img/h27h-q28.png]]",
   "choices": {
    "ア": "DELETE FROM 学生 WHERE 学生番号 = 'K1002'",
    "イ": "INSERT INTO 学生 VALUES ('J2002','渡辺次郎','M006','東京都')",

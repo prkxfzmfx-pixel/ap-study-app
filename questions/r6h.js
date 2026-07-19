@@ -432,7 +432,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "ウ",
   "hasImage": true,
-  "text": "\"部品\"表及び\"在庫\"表に対し，SQL文を実行して結果を得た。SQL文のaに入れる字句はどれか。\n[[img:questions/img/r6h-q26.png]]\n〔SQL文〕\nSELECT 部品.部品ID AS 部品ID，\nCASE WHEN 部品.発注点 > a\nTHEN N'必要' ELSE N'不要' END AS 発注要否\nFROM 部品 LEFT OUTER JOIN 在庫\nON 部品.部品ID = 在庫.部品ID\nGROUP BY 部品.部品ID，部品.発注点",
+  "text": "\"部品\"表及び\"在庫\"表に対し，SQL文を実行して結果を得た。SQL文のaに入れる字句はどれか。\n[[img:questions/img/r6h-q26.png]]\n〔SQL文〕\n[[code:SELECT 部品.部品ID AS 部品ID，\n　CASE WHEN 部品.発注点 > a\n　　THEN N'必要' ELSE N'不要' END AS 発注要否\nFROM 部品 LEFT OUTER JOIN 在庫\n　ON 部品.部品ID = 在庫.部品ID\nGROUP BY 部品.部品ID，部品.発注点]]",
   "choices": {
    "ア": "COALESCE(MIN(在庫.在庫数)，0)",
    "イ": "COALESCE(MIN(在庫.在庫数)，NULL)",

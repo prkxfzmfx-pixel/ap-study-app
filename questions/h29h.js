@@ -32,7 +32,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "エ",
   "hasImage": false,
-  "text": "あるプログラム言語において，識別子(identifier)は，先頭が英字で始まり，それ以降に任意個の英数字が続く文字列である。これをBNFで定義したとき，a に入るものはどれか。\n<digit>::＝0｜1｜2｜3｜4｜5｜6｜7｜8｜9\n<letter>::＝A｜B｜C｜…｜X｜Y｜Z｜a｜b｜c｜…｜x｜y｜z\n<identifier>::＝ a",
+  "text": "あるプログラム言語において，識別子(identifier)は，先頭が英字で始まり，それ以降に任意個の英数字が続く文字列である。これをBNFで定義したとき，a に入るものはどれか。\n<digit>::＝0｜1｜2｜3｜4｜5｜6｜7｜8｜9\n<letter>::＝A｜B｜C｜…｜X｜Y｜Z｜a｜b｜c｜…｜x｜y｜z\n<identifier>::＝ 〔a〕",
   "choices": {
    "ア": "<letter>｜<digit>｜<identifier><letter>｜<identifier><digit>",
    "イ": "<letter>｜<digit>｜<letter><identifier>｜<identifier><digit>",

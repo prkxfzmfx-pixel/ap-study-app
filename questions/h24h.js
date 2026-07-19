@@ -416,7 +416,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "エ",
   "hasImage": true,
-  "text": "販売価格が決められていない\"商品\"表に，次のSQL文を実行して販売価格を設定する。このとき，販売ランクがbの商品の販売価格の平均値は幾らか。\nUPDATE 商品 SET 販売価格 =\nCASE\nWHEN 販売ランク = 'a' THEN 単価 * 0.9\nWHEN 販売ランク = 'b' THEN 単価 - 500\nWHEN 販売ランク = 'c' THEN 単価 * 0.7\nELSE 単価\nEND\n[[img:questions/img/h24h-q26.png]]",
+  "text": "販売価格が決められていない\"商品\"表に，次のSQL文を実行して販売価格を設定する。このとき，販売ランクがbの商品の販売価格の平均値は幾らか。\n[[code:UPDATE 商品 SET 販売価格 =\n　CASE\n　　WHEN 販売ランク = 'a' THEN 単価 * 0.9\n　　WHEN 販売ランク = 'b' THEN 単価 - 500\n　　WHEN 販売ランク = 'c' THEN 単価 * 0.7\n　　ELSE 単価\n　END]]\n[[img:questions/img/h24h-q26.png]]",
   "choices": {
    "ア": "1,675",
    "イ": "2,100",

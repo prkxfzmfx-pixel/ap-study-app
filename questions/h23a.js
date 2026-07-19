@@ -122,7 +122,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "エ",
   "hasImage": false,
-  "text": "n個の正の整数 x[[sub:1]],x[[sub:2]],…,x[[sub:n]] が並んだ線形リストを [x[[sub:1]],x[[sub:2]],…,x[[sub:n]]] で表し，空リストは[ ]で表す。次のように再帰的に定義される関数 func(L) を，L=[1,3,2] を実引数として呼び出したとき，print文によって表示される数字はどれか。ここで，プログラム中の=は等号，:=は代入を表す。\n〔関数の定義〕\n・first([x[[sub:1]],x[[sub:2]],…,x[[sub:n]]])はx[[sub:1]]を返す。\n・butfirst([x[[sub:1]],x[[sub:2]],…,x[[sub:n]]])は[x[[sub:2]],…,x[[sub:n]]]を返す。butfirst([x])は[ ]を返す。\n・max(x,y)は，x≧yであればxを返し，そうでなければyを返す。\nfunc(L)\nbegin\nif L = [] then return 0;\nA := first(L);\nB := func(butfirst(L));\nC := max(A, B);\nprint C;\nreturn C;\nend",
+  "text": "n個の正の整数 x[[sub:1]],x[[sub:2]],…,x[[sub:n]] が並んだ線形リストを [x[[sub:1]],x[[sub:2]],…,x[[sub:n]]] で表し，空リストは[ ]で表す。次のように再帰的に定義される関数 func(L) を，L=[1,3,2] を実引数として呼び出したとき，print文によって表示される数字はどれか。ここで，プログラム中の=は等号，:=は代入を表す。\n〔関数の定義〕\n・first([x[[sub:1]],x[[sub:2]],…,x[[sub:n]]])はx[[sub:1]]を返す。\n・butfirst([x[[sub:1]],x[[sub:2]],…,x[[sub:n]]])は[x[[sub:2]],…,x[[sub:n]]]を返す。butfirst([x])は[ ]を返す。\n・max(x,y)は，x≧yであればxを返し，そうでなければyを返す。\n[[code:func(L)\nbegin\n　if L = [] then return 0;\n　A := first(L);\n　B := func(butfirst(L));\n　C := max(A, B);\n　print C;\n　return C;\nend]]",
   "choices": {
    "ア": "123",
    "イ": "133",
@@ -505,7 +505,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "イ",
   "hasImage": true,
-  "text": "価格設定年月日にNULLを含む\"商品\"表に対して，次の問合せを行った。この検索結果の行数は幾つか。\nSELECT 商品コード FROM 商品 WHERE 価格設定年月日 < '2011-12-01'\n[[img:questions/img/h23a-q29.png]]",
+  "text": "価格設定年月日にNULLを含む\"商品\"表に対して，次の問合せを行った。この検索結果の行数は幾つか。\n[[code:SELECT 商品コード FROM 商品 WHERE 価格設定年月日 < '2011-12-01']]\n[[img:questions/img/h23a-q29.png]]",
   "choices": {
    "ア": "1",
    "イ": "2",

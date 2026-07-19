@@ -90,10 +90,34 @@ def _frac_repl(m):
     return f'（{num}）/（{den}）'
 
 
+def _process_code(inner):
+    """コードブロック(<div class="code">/<pre>)の中身を、改行・行頭インデントを保持したまま整形する。"""
+    inner = re.sub(r'<span class="bb">(.*?)</span>', r'〔\1〕', inner, flags=re.S)  # 空欄記号 → 〔a〕
+    inner = re.sub(r'<br\s*/?>', '\n', inner)
+    inner = re.sub(r'<[^>]+>', '', inner)
+    inner = htmlmod.unescape(inner)
+    lines = [ln.rstrip() for ln in inner.split('\n')]   # 行末空白のみ除去（行頭インデントは保持）
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return '\n'.join(lines)
+
+
 def strip_tags(s, on_img=None):
-    """構造保持パーサv2: 分数・上下付き・改行・箇条書き・インライン画像を保持する。
+    """構造保持パーサv2: 分数・上下付き・改行・箇条書き・インライン画像・コードブロックを保持する。
     on_img(src) が与えられれば <img> を on_img の戻り値（プレースホルダ [[img:...]] など）に置換する。
     改行を含むテキストを返す（アプリは white-space:pre-wrap で表示）。"""
+    # コードブロック（SQL・擬似言語など整形保持ブロック）を先に退避し、後段の空白正規化から保護する
+    codes = []
+
+    def _grab(m):
+        codes.append(_process_code(m.group(1)))
+        return '\x00C%d\x00' % (len(codes) - 1)
+    s = re.sub(r'<div class="code">(.*?)</div>', _grab, s, flags=re.S)
+    s = re.sub(r'<pre[^>]*>(.*?)</pre>', _grab, s, flags=re.S)
+    # 本文中に残る空欄記号 → 〔a〕（視認できる表現）
+    s = re.sub(r'<span class="bb">(.*?)</span>', r'〔\1〕', s, flags=re.S)
     # 分数 <span class="frac"><span>分子</span>分母</span> → （分子）/（分母）
     s = re.sub(r'<span class="frac">\s*<span>(.*?)</span>(.*?)</span>', _frac_repl, s, flags=re.S)
     # 上付き・下付き → 範囲を明示するプレースホルダ（アプリ側で <sup>/<sub> に描画）
@@ -114,7 +138,11 @@ def strip_tags(s, on_img=None):
     s = re.sub(r'[ \t　]+', ' ', s)
     lines = [ln.strip() for ln in s.split('\n')]
     lines = [ln for ln in lines if ln]
-    return '\n'.join(lines).strip()
+    out = '\n'.join(lines).strip()
+    # 退避したコードブロックを [[code:...]] として本文へ戻す（改行・インデントを保持）
+    for i, c in enumerate(codes):
+        out = out.replace('\x00C%d\x00' % i, '[[code:%s]]' % c)
+    return out
 
 
 def extract_div(html, marker):

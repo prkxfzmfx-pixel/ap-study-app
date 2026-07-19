@@ -151,12 +151,12 @@ nav button.active { color: var(--accent); font-weight: 600; }
 
 /* KPI */
 .kpirow { display: flex; gap: 10px; margin-bottom: 12px; }
-.kpi { flex: 1; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 12px; text-align: center; }
+.kpi { flex: 1 1 70px; min-width: 70px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 12px; text-align: center; }
 .kpi .v { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .kpi .v small { font-size: 13px; font-weight: 600; }
 .kpi .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .streak .v { color: var(--accent); }
-.statgrid { display: flex; gap: 10px; }
+.statgrid { display: flex; gap: 10px; flex-wrap: wrap; }
 .statgrid .kpi { flex: 1; }
 
 /* ログフォーム */
@@ -254,6 +254,22 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .pbar { display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
 .pbar .pb-ok { background: var(--good); }
 .pbar .pb-weak { background: var(--danger); }
+/* コードブロック（SQL・擬似言語など）: 等幅・折り返さない・ブロック内だけ横スクロール */
+.qtext .qcode { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+  white-space: pre; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: var(--surface-2); border-radius: 8px; padding: 9px 11px; margin: 7px 0;
+  font-size: 13px; line-height: 1.65; -webkit-user-select: text; user-select: text; }
+/* 習熟状況ドーナツ */
+.donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.donut { width: 128px; height: 128px; flex: 0 0 auto; color: var(--ink-1); }
+.donut .dn { font-size: 8px; font-weight: 800; fill: currentColor; }
+.donut .ds { font-size: 3.4px; fill: var(--muted); }
+.donut-legend { flex: 1 1 150px; min-width: 150px; display: flex; flex-direction: column; gap: 9px; }
+.dl-row { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.dl-sw { width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto; }
+.dl-name { color: var(--muted); }
+.dl-val { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 700; }
+.dl-pct { color: var(--muted); font-weight: 500; margin-left: 6px; font-variant-numeric: tabular-nums; }
 .exrow.tap { cursor: pointer; margin: 0 -6px; padding: 8px 6px; border-radius: 8px; }
 .exrow.tap:active { background: var(--surface-2); }
 .tapmark { color: var(--accent); font-size: 12px; }
@@ -476,11 +492,17 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<'
 // [[img:パス]]→<img>、[[sup:x]]→<sup>x</sup>（上付き）、[[sub:x]]→<sub>x</sub>（下付き）。
 // 旧データに残るキャレット表記 10^5 も上付きに描画する（regenで置換されるが保険）。
 function qTextHtml(t) {
-  return esc(t == null ? '' : t)
+  let s = esc(t == null ? '' : t);
+  // コードブロック [[code:...]] を先に退避（等幅・折り返さない・ブロック内だけ横スクロール）。
+  const codes = [];
+  s = s.replace(/\[\[code:([\s\S]*?)\]\]/g, (m, p) => { codes.push(p); return `\u0000C${codes.length - 1}\u0000`; });
+  s = s
     .replace(/\[\[img:([^\]]+)\]\]/g, (m, p) => `<img src="${p}" alt="図" loading="lazy">`)
     .replace(/\[\[sup:([^\]]*)\]\]/g, (m, p) => `<sup>${p}</sup>`)
     .replace(/\[\[sub:([^\]]*)\]\]/g, (m, p) => `<sub>${p}</sub>`)
     .replace(/\^(\{[^}]+\}|[0-9A-Za-z＋－+\-]+)/g, (m, p) => `<sup>${p.replace(/^\{|\}$/g, '')}</sup>`);
+  s = s.replace(/\u0000C(\d+)\u0000/g, (m, i) => `<pre class="qcode">${codes[+i]}</pre>`);
+  return s;
 }
 function render() {
   const main = document.getElementById('main');
@@ -622,6 +644,7 @@ function startAddCal(iso) { state.selDate = iso; state.form = newForm(iso); rend
 function viewSummary() {
   const weak = weakList().length, okN = BANK.filter(q => isOk(q.id)).length, attemptedN = BANK.filter(q => isAttempted(q.id)).length;
   const stats = `<div class="statgrid">
+    <div class="kpi"><div class="v">${BANK.length}<small>問</small></div><div class="l">収録</div></div>
     <div class="kpi"><div class="v">${attemptedN}<small>問</small></div><div class="l">挑戦済み</div></div>
     <div class="kpi"><div class="v" style="color:var(--good)">${okN}<small>問</small></div><div class="l">正解</div></div>
     <div class="kpi"><div class="v" style="color:var(--danger)">${weak}<small>問</small></div><div class="l">弱点</div></div>
@@ -630,7 +653,7 @@ function viewSummary() {
     ? `<h2>年度別サマリ</h2><div class="card">${examSummaryHtml(true)}</div>
        <div class="hint">弱点がある回をタップすると、その回の弱点だけを復習できます（緑=正解／赤=弱点、収録数に対する割合）。<br>${esc(BANK_META.source || '')}</div>`
     : `<div class="card"><div class="empty">問題データが読み込めませんでした。<br>オンラインで開き直してください。</div></div>`;
-  return `<h1>年度別サマリ</h1>${stats}${body}`;
+  return `<h1>全体サマリ</h1>${stats}${body}`;
 }
 // 年度行タップ: その回の弱点だけを復習（弱点0なら開始しない）。中断・再開はセッション機構で共通に動く。
 function startYearReview(year, term) {
@@ -661,6 +684,40 @@ function dojoUrl(q) {
 }
 
 const UNKNOWN = '?';   // 「わからない」の内部値
+// 収録問題全体の習熟内訳（正解ok／弱点weak／未実施）
+function masteryStats() {
+  let ok = 0, weak = 0;
+  for (const q of BANK) { if (isOk(q.id)) ok++; else if (isWeak(q.id)) weak++; }
+  const total = BANK.length;
+  return { total, ok, weak, un: total - ok - weak };
+}
+// 習熟状況ドーナツ（正解=緑・弱点=赤・未実施=灰）。区分ごとの問題数と割合を凡例に併記。SVG直書き。
+function masteryDonutHtml() {
+  const s = masteryStats();
+  const T = s.total || 1;
+  const pct = n => n / T * 100;
+  const okP = pct(s.ok), weakP = pct(s.weak);
+  const r = 15.9155, cx = 21, cy = 21, sw = 5.2;   // 円周=100 の標準ドーナツ
+  // 背景トラック（未実施の灰）→ 正解(緑) → 弱点(赤) を上に重ね、塗り残しが未実施になる
+  const arc = (color, len, offStart, opacity) =>
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"${opacity ? ` stroke-opacity="${opacity}"` : ''} stroke-dasharray="${len.toFixed(3)} ${(100 - len).toFixed(3)}" stroke-dashoffset="${(25 - offStart).toFixed(3)}"/>`;
+  const svg = `<svg class="donut" viewBox="0 0 42 42" role="img" aria-label="習熟状況ドーナツ：正解${s.ok}問・弱点${s.weak}問・未実施${s.un}問">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--muted)" stroke-opacity="0.22" stroke-width="${sw}"/>
+    ${s.ok ? arc('var(--good)', okP, 0) : ''}
+    ${s.weak ? arc('var(--danger)', weakP, okP) : ''}
+    <text class="dn" x="21" y="20.4" text-anchor="middle">${s.total}</text>
+    <text class="ds" x="21" y="24.6" text-anchor="middle">収録問題</text>
+  </svg>`;
+  const p1 = n => (T ? (n / T * 100) : 0).toFixed(n && n / T * 100 < 10 ? 1 : 0);
+  const row = (cls, name, n, opacity) =>
+    `<div class="dl-row"><span class="dl-sw" style="background:${cls}${opacity ? ';opacity:' + opacity : ''}"></span><span class="dl-name">${name}</span><span class="dl-val">${n}<small>問</small></span><span class="dl-pct">${p1(n)}%</span></div>`;
+  const legend = `<div class="donut-legend">
+    ${row('var(--good)', '正解', s.ok)}
+    ${row('var(--danger)', '弱点', s.weak)}
+    ${row('var(--muted)', '未実施', s.un, '0.5')}
+  </div>`;
+  return `<div class="donut-wrap">${svg}${legend}</div>`;
+}
 // 進捗バー（正解=緑・弱点=赤・未挑戦=灰）
 function progressBarHtml(pr) {
   const okPct = pr.included ? pr.correct / pr.included * 100 : 0;
@@ -729,12 +786,8 @@ function viewPractice() {
       <div class="t">🔁 復習モード ${weak ? `（${weak}問）` : ''}</div>
       <div class="s">${weak ? '弱点の問題だけを再出題。連続2回正解で「正解」に戻ります。' : '弱点の問題はまだありません'}</div></button>`;
 
-  const stats = `<h2>習熟状況</h2><div class="statgrid">
-    <div class="kpi"><div class="v">${attemptedN}<small>問</small></div><div class="l">挑戦済み</div></div>
-    <div class="kpi"><div class="v" style="color:var(--good)">${okN}<small>問</small></div><div class="l">正解</div></div>
-    <div class="kpi"><div class="v" style="color:var(--danger)">${weak}<small>問</small></div><div class="l">弱点</div></div>
-  </div>
-  <div class="hint">解答は自動で学習ログに記録されます。「わからない」も不正解として弱点に入ります。<br>年度別の進捗と「回ごとの弱点復習」は <b>「年度別」タブ</b> から。<br>${esc(BANK_META.source || '出典: 情報処理推進機構(IPA) 過去問題')}</div>`;
+  const stats = `<h2>習熟状況</h2><div class="card">${masteryDonutHtml()}</div>
+  <div class="hint">収録問題 ${BANK.length} 問全体に対する内訳です（正解＝連続正解で克服／弱点＝不正解・わからない／未実施＝未挑戦）。解答は自動で学習ログに記録されます。<br>年度別の進捗と「回ごとの弱点復習」は <b>「年度別」タブ</b> から。<br>${esc(BANK_META.source || '出典: 情報処理推進機構(IPA) 過去問題')}</div>`;
 
   return `<h1>過去問演習</h1>${resume}${menu}${stats}`;
 }
@@ -1072,6 +1125,7 @@ if (typeof module !== 'undefined' && module.exports) {
     calSelect, startAddCal, calMove,
     statusOf, isAttempted, isWeak, isOk, weakList, applyResult, examProgress, validSession, persistSession, resumeSession,
     startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl, UNKNOWN, qTextHtml,
+    masteryStats, masteryDonutHtml, viewPractice,
     setExamDate, setExamName, resetExam, resetProgress, daysUntilExam, daysBetween, todayISO, addDays,
     exportJson, importData, wipeAll, cloudBackup, cloudSettingsHtml, decryptWithPin, applyPinToken, saveCloudToken, cloudRestore, recordCount,
     BANK, BANK_META, BANK_BY_ID, _ls: LS_KEY,

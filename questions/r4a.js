@@ -466,7 +466,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "ウ",
   "hasImage": true,
-  "text": "\"商品\"表に対して，次のSQL文を実行して得られる仕入先コード数は幾つか。\n〔SQL文〕\nSELECT DISTINCT 仕入先コード FROM 商品\nWHERE (販売単価 - 仕入単価) >\n(SELECT AVG (販売単価 - 仕入単価) FROM 商品)\n[[img:questions/img/r4a-q28.png]]",
+  "text": "\"商品\"表に対して，次のSQL文を実行して得られる仕入先コード数は幾つか。\n〔SQL文〕\n[[code:SELECT DISTINCT 仕入先コード FROM 商品\n　WHERE (販売単価 - 仕入単価) >\n　　(SELECT AVG (販売単価 - 仕入単価) FROM 商品)]]\n[[img:questions/img/r4a-q28.png]]",
   "choices": {
    "ア": "1",
    "イ": "2",

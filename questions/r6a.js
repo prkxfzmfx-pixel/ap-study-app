@@ -504,7 +504,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "イ",
   "hasImage": true,
-  "text": "\"成績\"表に対して，SQL文1と同一の結果を得るために，SQL文2のaに入れる字句はどれか。\n[[img:questions/img/r6a-q30.png]]\n〔SQL文1〕\nSELECT R1.学生番号，R1.実施回，R1.得点 FROM 成績 R1\nINNER JOIN\n(SELECT 学生番号，MIN(実施回) AS 初回 FROM 成績 GROUP BY 学生番号) R2\nON R1.学生番号 = R2.学生番号\nAND R1.実施回 = R2.初回\n〔SQL文2〕\nSELECT 学生番号，実施回，得点\nFROM (SELECT 学生番号，実施回，得点，ROW_NUMBER() OVER(a) AS 番号 FROM 成績) R1\nWHERE R1.番号 = 1",
+  "text": "\"成績\"表に対して，SQL文1と同一の結果を得るために，SQL文2のaに入れる字句はどれか。\n[[img:questions/img/r6a-q30.png]]\n〔SQL文1〕\n[[code:SELECT R1.学生番号，R1.実施回，R1.得点 FROM 成績 R1\n　INNER JOIN\n　(SELECT 学生番号，MIN(実施回) AS 初回 FROM 成績 GROUP BY 学生番号) R2\n　ON R1.学生番号 = R2.学生番号\n　AND R1.実施回 = R2.初回]]\n〔SQL文2〕\n[[code:SELECT 学生番号，実施回，得点\n　FROM (SELECT 学生番号，実施回，得点，ROW_NUMBER() OVER(〔a〕) AS 番号 FROM 成績) R1\n　WHERE R1.番号 = 1]]",
   "choices": {
    "ア": "ORDER BY 学生番号，実施回",
    "イ": "PARTITION BY 学生番号 ORDER BY 実施回",

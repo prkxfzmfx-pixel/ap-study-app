@@ -123,7 +123,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "イ",
   "hasImage": false,
-  "text": "次の関数g(x)の定義に従ってg(4)を再帰的に求めるとき，必要な加算の回数は幾らか。\ng(x) = if x<2 then 1\nelse g(x－1)＋g(x－2)",
+  "text": "次の関数g(x)の定義に従ってg(4)を再帰的に求めるとき，必要な加算の回数は幾らか。\n[[code:　g(x) = if x<2 then 1\n　　　　　　　else g(x－1)＋g(x－2)]]",
   "choices": {
    "ア": "3",
    "イ": "4",

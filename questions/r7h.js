@@ -578,7 +578,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "イ",
   "hasImage": false,
-  "text": "Webサーバのログを分析したところ，Webサーバへの攻撃と思われるHTTPリクエストヘッダーが記録されていた。次のHTTPリクエストヘッダーから推測できる，攻撃者が悪用しようとしていた可能性が高い脆弱性はどれか。ここで，HTTPリクエストヘッダー中の\"%20\"は空白を意味する。\n〔HTTPリクエストヘッダーの一部〕\nGET /cgi-bin/submit.cgi?user=;cat%20/etc/passwd HTTP/1.1\nAccept: */*\nAccept-Language: ja\nUA-CPU: x86\nAccept-Encoding: gzip，deflate\nUser-Agent: (省略)\nHost: test.example.com\nConnection: Keep-Alive",
+  "text": "Webサーバのログを分析したところ，Webサーバへの攻撃と思われるHTTPリクエストヘッダーが記録されていた。次のHTTPリクエストヘッダーから推測できる，攻撃者が悪用しようとしていた可能性が高い脆弱性はどれか。ここで，HTTPリクエストヘッダー中の\"%20\"は空白を意味する。\n〔HTTPリクエストヘッダーの一部〕\n[[code:GET /cgi-bin/submit.cgi?user=;cat%20/etc/passwd HTTP/1.1\nAccept: */*\nAccept-Language: ja\nUA-CPU: x86\nAccept-Encoding: gzip，deflate\nUser-Agent: (省略)\nHost: test.example.com\nConnection: Keep-Alive]]",
   "choices": {
    "ア": "HTTPヘッダーインジェクション(HTTP Response Splitting)",
    "イ": "OSコマンドインジェクション",
