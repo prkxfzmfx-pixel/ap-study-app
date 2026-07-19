@@ -210,7 +210,7 @@ window.AP_MANIFEST = {
       "label": "平成26年秋",
       "total": 80,
       "included": 76,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "h26a.js"
     },
     {
