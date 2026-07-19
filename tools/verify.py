@@ -92,6 +92,10 @@ def check_banks(ans, banks):
                 p = os.path.join(ROOT, q['img'])
                 if not os.path.exists(p):
                     errors.append(f'[B] {qid}: img ファイルが存在しない: {q["img"]}')
+            # 問題文中のインライン画像プレースホルダ [[img:パス]] の参照先も存在確認する。
+            for rel in re.findall(r'\[\[img:([^\]]+)\]\]', q.get('text', '')):
+                if not os.path.exists(os.path.join(ROOT, rel)):
+                    errors.append(f'[B] {qid}: 問題文の画像が存在しない: {rel}')
             qn = str(q.get('qnum'))
             if qn in seen:
                 errors.append(f'[B] {key}: 問{qn} が重複')

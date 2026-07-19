@@ -73,13 +73,37 @@ def ol_repl(s):
     return re.sub(r'<span class="ol">(.*?)</span>', f, s, flags=re.S)
 
 
-def strip_tags(s):
+def _frac_repl(m):
+    num = re.sub(r'<[^>]+>', '', m.group(1)).strip()
+    den = re.sub(r'<[^>]+>', '', m.group(2)).strip()
+    return f'（{num}）/（{den}）'
+
+
+def strip_tags(s, on_img=None):
+    """構造保持パーサv2: 分数・上下付き・改行・箇条書き・インライン画像を保持する。
+    on_img(src) が与えられれば <img> を on_img の戻り値（プレースホルダ [[img:...]] など）に置換する。
+    改行を含むテキストを返す（アプリは white-space:pre-wrap で表示）。"""
+    # 分数 <span class="frac"><span>分子</span>分母</span> → （分子）/（分母）
+    s = re.sub(r'<span class="frac">\s*<span>(.*?)</span>(.*?)</span>', _frac_repl, s, flags=re.S)
+    # 上付き・下付き
     s = re.sub(r'<sup>(.*?)</sup>', lambda m: '^' + re.sub(r'<[^>]+>', '', m.group(1)), s, flags=re.S)
     s = re.sub(r'<sub>(.*?)</sub>', lambda m: '_' + re.sub(r'<[^>]+>', '', m.group(1)), s, flags=re.S)
-    s = re.sub(r'<br\s*/?>', ' ', s)
+    # インライン画像 → プレースホルダ
+    if on_img is not None:
+        s = re.sub(r'<img[^>]*\ssrc="([^"]+)"[^>]*>', lambda m: on_img(m.group(1)), s)
+    # 箇条書き <li> → 改行＋・
+    s = re.sub(r'<li[^>]*>', '\n・', s)
+    # 段落・ブロック・改行要素 → 改行
+    s = re.sub(r'<br\s*/?>', '\n', s)
+    s = re.sub(r'</p\s*>|<p[^>]*>|</div\s*>|<div[^>]*>|</?ul[^>]*>|</?ol[^>]*>|</li\s*>|</tr\s*>', '\n', s)
+    # 残りのタグ除去
     s = re.sub(r'<[^>]+>', '', s)
     s = htmlmod.unescape(s)
-    return re.sub(r'[ \t　]+', ' ', re.sub(r'\s+', ' ', s)).strip()
+    # 各行の空白を整理し、空行を除去して改行を保持
+    s = re.sub(r'[ \t　]+', ' ', s)
+    lines = [ln.strip() for ln in s.split('\n')]
+    lines = [ln for ln in lines if ln]
+    return '\n'.join(lines).strip()
 
 
 def extract_div(html, marker):
@@ -116,6 +140,43 @@ def load_existing(key):
         raise SystemExit(f'ABORT: 既存 {key}.js を解析できない')
     qs = json.loads(mm.group(2))
     return {int(q['qnum']): q for q in qs}
+
+
+def download_img(src, ddir, target_rel, allow_net):
+    """#mondai内画像を questions/img/ に保存（既にあれば再取得しない）。取得できたらTrue。"""
+    target = os.path.join(ROOT, target_rel)
+    if os.path.exists(target):
+        return True
+    img_url = f'{BASE}/{ddir}/{src}' if not src.startswith('http') else src
+    idata, _ = fetch(img_url, os.path.join(CACHE, ddir, '_img', os.path.basename(src)), allow_net)
+    if idata is not None:
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        io.open(target, 'wb').write(idata)
+    return os.path.exists(target)
+
+
+def build_mondai(mondai, key, n, ddir, allow_net):
+    """#mondaiのHTMLから、インライン画像を [[img:...]] プレースホルダとして保持した問題文を作る。
+    画像は questions/img/<key>-q<N>.png（先頭）／<key>-q<N>_<i>.png（2枚目以降）に保存。
+    戻り値: (text, imgs)  imgs=保存できた画像の相対パスの一覧（先頭が主図）。"""
+    m_imgs = [s for s in imgs_in(mondai) if s.lower().endswith(('.png', '.gif', '.jpg', '.jpeg'))]
+    uniq = list(dict.fromkeys(m_imgs))
+    srcmap = {}
+    for i, src in enumerate(uniq):
+        ext = os.path.splitext(src)[1].lower()
+        srcmap[src] = f'questions/img/{key}-q{n}{ext}' if i == 0 else f'questions/img/{key}-q{n}_{i}{ext}'
+    for src in uniq:
+        download_img(src, ddir, srcmap[src], allow_net)
+
+    def on_img(src):
+        rel = srcmap.get(src)
+        if rel and os.path.exists(os.path.join(ROOT, rel)):
+            return f' [[img:{rel}]] '
+        return ''
+
+    text = strip_tags(mondai, on_img=on_img)
+    imgs = [srcmap[s] for s in uniq if os.path.exists(os.path.join(ROOT, srcmap[s]))]
+    return text, imgs
 
 
 def main():
