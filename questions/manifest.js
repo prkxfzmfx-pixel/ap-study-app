@@ -110,7 +110,7 @@ window.AP_MANIFEST = {
       "label": "令和元年秋",
       "total": 80,
       "included": 76,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r1a.js"
     },
     {
