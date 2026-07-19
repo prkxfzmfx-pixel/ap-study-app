@@ -100,7 +100,7 @@ window.AP_MANIFEST = {
       "label": "令和2年秋",
       "total": 80,
       "included": 71,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "r2a.js"
     },
     {
