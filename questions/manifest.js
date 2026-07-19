@@ -180,7 +180,7 @@ window.AP_MANIFEST = {
       "label": "平成28年春",
       "total": 80,
       "included": 75,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "h28h.js"
     },
     {
