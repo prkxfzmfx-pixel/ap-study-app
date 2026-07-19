@@ -653,7 +653,7 @@ window.AP_REGISTER(
    "ア": "n＋1",
    "イ": "2n",
    "ウ": "（n(n－1)）/（2）",
-   "エ": "log_2n"
+   "エ": "log[[sub:2]]n"
   },
   "explanation": ""
  },

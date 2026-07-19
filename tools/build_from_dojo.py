@@ -96,9 +96,9 @@ def strip_tags(s, on_img=None):
     改行を含むテキストを返す（アプリは white-space:pre-wrap で表示）。"""
     # 分数 <span class="frac"><span>分子</span>分母</span> → （分子）/（分母）
     s = re.sub(r'<span class="frac">\s*<span>(.*?)</span>(.*?)</span>', _frac_repl, s, flags=re.S)
-    # 上付き・下付き
-    s = re.sub(r'<sup>(.*?)</sup>', lambda m: '^' + re.sub(r'<[^>]+>', '', m.group(1)), s, flags=re.S)
-    s = re.sub(r'<sub>(.*?)</sub>', lambda m: '_' + re.sub(r'<[^>]+>', '', m.group(1)), s, flags=re.S)
+    # 上付き・下付き → 範囲を明示するプレースホルダ（アプリ側で <sup>/<sub> に描画）
+    s = re.sub(r'<sup>(.*?)</sup>', lambda m: '[[sup:' + re.sub(r'<[^>]+>', '', m.group(1)).strip() + ']]', s, flags=re.S)
+    s = re.sub(r'<sub>(.*?)</sub>', lambda m: '[[sub:' + re.sub(r'<[^>]+>', '', m.group(1)).strip() + ']]', s, flags=re.S)
     # インライン画像 → プレースホルダ
     if on_img is not None:
         s = re.sub(r'<img[^>]*\ssrc="([^"]+)"[^>]*>', lambda m: on_img(m.group(1)), s)

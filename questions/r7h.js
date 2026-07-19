@@ -32,7 +32,7 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "ア",
   "hasImage": false,
-  "text": "0≦x≦1の範囲で単調に増加する連続関数 ƒ(x) が ƒ(0)＜0≦ƒ(1) を満たすときに，区間内で ƒ(x)＝0 であるxの値を近似的に求めるアルゴリズムにおいて，(2)は何回実行されるか。\n〔アルゴリズム〕\n・x_0←0，x_1←1とする。\n・x←（x0＋x1）/（2）とする。\n・x_1－x＜0.001ならばxの値を近似値として終了する。\n・ƒ(x)≧0ならばx_1←xとして，そうでなければx_0←xとする。\n・(2)に戻る。",
+  "text": "0≦x≦1の範囲で単調に増加する連続関数 ƒ(x) が ƒ(0)＜0≦ƒ(1) を満たすときに，区間内で ƒ(x)＝0 であるxの値を近似的に求めるアルゴリズムにおいて，(2)は何回実行されるか。\n〔アルゴリズム〕\n・x[[sub:0]]←0，x[[sub:1]]←1とする。\n・x←（x0＋x1）/（2）とする。\n・x[[sub:1]]－x＜0.001ならばxの値を近似値として終了する。\n・ƒ(x)≧0ならばx[[sub:1]]←xとして，そうでなければx[[sub:0]]←xとする。\n・(2)に戻る。",
   "choices": {
    "ア": "10",
    "イ": "20",
@@ -196,12 +196,12 @@ window.AP_REGISTER(
   "cat": "T",
   "answer": "イ",
   "hasImage": false,
-  "text": "二つのシステムA，Bの稼働率をそれぞれα_A(0＜α_A＜1)，α_B(0＜α_B＜1)，MTBFをそれぞれMTBF_A，MTBF_B，MTTRをそれぞれMTTR_A，MTTR_Bとしたとき，これらの関係として，常に成り立つものはどれか。",
+  "text": "二つのシステムA，Bの稼働率をそれぞれα[[sub:A]](0＜α[[sub:A]]＜1)，α[[sub:B]](0＜α[[sub:B]]＜1)，MTBFをそれぞれMTBF[[sub:A]]，MTBF[[sub:B]]，MTTRをそれぞれMTTR[[sub:A]]，MTTR[[sub:B]]としたとき，これらの関係として，常に成り立つものはどれか。",
   "choices": {
-   "ア": "α_A＝α_Bならば，MTBF_A＝MTBF_Bであり，かつMTTR_A＝MTTR_Bである。",
-   "イ": "α_A＝α_Bならば，MTTR_A／MTBF_A＝MTTR_B／MTBF_Bである。",
-   "ウ": "α_A＞α_Bならば，MTBF_A＞MTBF_Bであり，かつMTTR_A＞MTTR_Bである。",
-   "エ": "α_A＞α_Bならば，MTTR_A／MTBF_A＞MTTR_B／MTBF_Bである。"
+   "ア": "α[[sub:A]]＝α[[sub:B]]ならば，MTBF[[sub:A]]＝MTBF[[sub:B]]であり，かつMTTR[[sub:A]]＝MTTR[[sub:B]]である。",
+   "イ": "α[[sub:A]]＝α[[sub:B]]ならば，MTTR[[sub:A]]／MTBF[[sub:A]]＝MTTR[[sub:B]]／MTBF[[sub:B]]である。",
+   "ウ": "α[[sub:A]]＞α[[sub:B]]ならば，MTBF[[sub:A]]＞MTBF[[sub:B]]であり，かつMTTR[[sub:A]]＞MTTR[[sub:B]]である。",
+   "エ": "α[[sub:A]]＞α[[sub:B]]ならば，MTTR[[sub:A]]／MTBF[[sub:A]]＞MTTR[[sub:B]]／MTBF[[sub:B]]である。"
   },
   "explanation": "正解はイ。稼働率α＝MTBF/(MTBF＋MTTR)なので、α_A＝α_BのときMTTR_A/MTBF_A＝MTTR_B/MTBF_B（比が等しい）が常に成り立つ。ア：稼働率が同じでもMTBFやMTTRの個々の値が等しいとは限らない。ウ：稼働率が大きくてもMTBF・MTTRの大小は一意に決まらない。エ：α_A＞α_BならMTTR/MTBFは小さくなるので不等号が逆。"
  },

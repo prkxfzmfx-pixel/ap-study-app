@@ -73,6 +73,20 @@ for (const q of api.BANK) {
 }
 console.log(`OK 問題バンク: ${api.BANK.length}問／全問 正解がIPA解答例と一致・選択肢4・問題文あり（うち解説あり ${explCount}問）`);
 
+// 1b) 上付き・下付き・インライン画像プレースホルダのレンダリング（構造保持パーサv2）
+{
+  const h = api.qTextHtml('log[[sub:10]]B と 10[[sup:-8]] と [[img:questions/img/x.png]] と 2^3');
+  assert(h.includes('<sub>10</sub>'), '下付き [[sub:]]→<sub>');
+  assert(h.includes('<sup>-8</sup>'), '上付き [[sup:]]→<sup>');
+  assert(/<img src="questions\/img\/x\.png"/.test(h), 'インライン画像 [[img:]]→<img>');
+  assert(h.includes('<sup>3</sup>'), 'キャレット表記 2^3→<sup>3</sup>');
+  assert(!h.includes('[[sub:') && !h.includes('[[sup:'), 'プレースホルダの取りこぼしなし');
+  // r2a問1: log の底（下付き）が保持されていること
+  const r2q1 = api.BANK_BY_ID['r2a-q1'];
+  assert(r2q1 && /log\[\[sub:\d+\]\]/.test(Object.values(r2q1.choices).join('')), 'r2a問1 選択肢に log の底（下付き）を保持');
+}
+console.log('OK 上付き/下付き/インライン画像のレンダリング（r2a問1のlog底を含む）');
+
 // 2) 全タブが描画される
 for (const t of ['home', 'cal', 'summary', 'practice', 'settings']) {
   api.go(t);

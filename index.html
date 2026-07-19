@@ -472,9 +472,15 @@ function go(tab) {
 
 /* ============ 描画 ============ */
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-// 問題文をエスケープしたうえで、インライン画像プレースホルダ [[img:パス]] を <img> に置換する（構造保持パーサv2）。
+// 問題文・選択肢をエスケープしたうえで、プレースホルダを描画する（構造保持パーサv2）。
+// [[img:パス]]→<img>、[[sup:x]]→<sup>x</sup>（上付き）、[[sub:x]]→<sub>x</sub>（下付き）。
+// 旧データに残るキャレット表記 10^5 も上付きに描画する（regenで置換されるが保険）。
 function qTextHtml(t) {
-  return esc(t == null ? '' : t).replace(/\[\[img:([^\]]+)\]\]/g, (m, p) => `<img src="${p}" alt="図" loading="lazy">`);
+  return esc(t == null ? '' : t)
+    .replace(/\[\[img:([^\]]+)\]\]/g, (m, p) => `<img src="${p}" alt="図" loading="lazy">`)
+    .replace(/\[\[sup:([^\]]*)\]\]/g, (m, p) => `<sup>${p}</sup>`)
+    .replace(/\[\[sub:([^\]]*)\]\]/g, (m, p) => `<sub>${p}</sub>`)
+    .replace(/\^(\{[^}]+\}|[0-9A-Za-z＋－+\-]+)/g, (m, p) => `<sup>${p.replace(/^\{|\}$/g, '')}</sup>`);
 }
 function render() {
   const main = document.getElementById('main');
@@ -777,7 +783,7 @@ function viewQuiz() {
       else cls += ' dim';
     }
     const oc = answered ? '' : `onclick="answerQuiz('${k}')"`;
-    return `<button class="${cls}" ${oc}><span class="k">${k}</span><span>${esc(q.choices[k] || '')}</span></button>`;
+    return `<button class="${cls}" ${oc}><span class="k">${k}</span><span>${qTextHtml(q.choices[k] || '')}</span></button>`;
   }).join('');
   // 5番目の「わからない」（ア〜エと区別できるスタイル）。選択＝不正解扱い。
   let ukCls = 'choice unknown';
@@ -1065,7 +1071,7 @@ if (typeof module !== 'undefined' && module.exports) {
     partAgg, logDates, recordPracticeAnswer, viewSummary, examSummaryHtml, startYearReview,
     calSelect, startAddCal, calMove,
     statusOf, isAttempted, isWeak, isOk, weakList, applyResult, examProgress, validSession, persistSession, resumeSession,
-    startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl, UNKNOWN,
+    startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl, UNKNOWN, qTextHtml,
     setExamDate, setExamName, resetExam, resetProgress, daysUntilExam, daysBetween, todayISO, addDays,
     exportJson, importData, wipeAll, cloudBackup, cloudSettingsHtml, decryptWithPin, applyPinToken, saveCloudToken, cloudRestore, recordCount,
     BANK, BANK_META, BANK_BY_ID, _ls: LS_KEY,
