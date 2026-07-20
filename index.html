@@ -500,6 +500,7 @@ function qTextHtml(t) {
     .replace(/\[\[img:([^\]]+)\]\]/g, (m, p) => `<img src="${p}" alt="図" loading="lazy">`)
     .replace(/\[\[sup:([^\]]*)\]\]/g, (m, p) => `<sup>${p}</sup>`)
     .replace(/\[\[sub:([^\]]*)\]\]/g, (m, p) => `<sub>${p}</sub>`)
+    .replace(/\[\[u:([^\]]*)\]\]/g, (m, p) => `<u>${p}</u>`)
     .replace(/\^(\{[^}]+\}|[0-9A-Za-z＋－+\-]+)/g, (m, p) => `<sup>${p.replace(/^\{|\}$/g, '')}</sup>`);
   s = s.replace(/\u0000C(\d+)\u0000/g, (m, i) => `<pre class="qcode">${codes[+i]}</pre>`);
   return s;

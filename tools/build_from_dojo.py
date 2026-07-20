@@ -118,6 +118,8 @@ def strip_tags(s, on_img=None):
     s = re.sub(r'<pre[^>]*>(.*?)</pre>', _grab, s, flags=re.S)
     # 本文中に残る空欄記号 → 〔a〕（視認できる表現）
     s = re.sub(r'<span class="bb">(.*?)</span>', r'〔\1〕', s, flags=re.S)
+    # 下線（主キー・外部キー表記など） → プレースホルダ（アプリ側で <u> に描画）。内側は素のテキストにする
+    s = re.sub(r'<u>(.*?)</u>', lambda m: '[[u:' + re.sub(r'<[^>]+>', '', m.group(1)).strip() + ']]', s, flags=re.S)
     # 分数 <span class="frac"><span>分子</span>分母</span> → （分子）/（分母）
     s = re.sub(r'<span class="frac">\s*<span>(.*?)</span>(.*?)</span>', _frac_repl, s, flags=re.S)
     # 上付き・下付き → 範囲を明示するプレースホルダ（アプリ側で <sup>/<sub> に描画）
