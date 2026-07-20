@@ -128,8 +128,16 @@ def strip_tags(s, on_img=None):
     # インライン画像 → プレースホルダ
     if on_img is not None:
         s = re.sub(r'<img[^>]*\ssrc="([^"]+)"[^>]*>', lambda m: on_img(m.group(1)), s)
-    # 箇条書き <li> → 改行＋・
-    s = re.sub(r'<li[^>]*>', '\n・', s)
+    # 箇条書き <li> → 改行＋マーカー。道場は丸数字を class="maruN"（N=1..20）で表す（①=U+2460）。
+    # それ以外の項目は「・」。丸数字を保持することで問題文中の①〜⑥参照と対応が取れる。
+    def _li_open(m):
+        mm = re.search(r'maru(\d+)', m.group(0))
+        if mm:
+            n = int(mm.group(1))
+            if 1 <= n <= 20:
+                return '\n' + chr(0x2460 + n - 1) + ' '
+        return '\n・'
+    s = re.sub(r'<li[^>]*>', _li_open, s)
     # 段落・ブロック・改行要素 → 改行
     s = re.sub(r'<br\s*/?>', '\n', s)
     s = re.sub(r'</p\s*>|<p[^>]*>|</div\s*>|<div[^>]*>|</?ul[^>]*>|</?ol[^>]*>|</li\s*>|</tr\s*>', '\n', s)
