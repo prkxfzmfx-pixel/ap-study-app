@@ -280,7 +280,7 @@ window.AP_MANIFEST = {
       "label": "平成23年春(特別)",
       "total": 80,
       "included": 71,
-      "hasExpl": false,
+      "hasExpl": true,
       "file": "h23h.js"
     },
     {
