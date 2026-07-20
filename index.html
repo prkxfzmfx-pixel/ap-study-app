@@ -274,8 +274,12 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .exrow.tap:active { background: var(--surface-2); }
 .tapmark { color: var(--accent); font-size: 12px; }
 .exgo-row { margin-top: 5px; text-align: right; }
+.exgo-row.two { display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; }
 .exgo { font-size: 11px; font-weight: 700; color: var(--accent); }
 .exgo.none { color: var(--muted); font-weight: 500; }
+.exbtn { font-size: 11px; font-weight: 700; color: var(--accent); background: var(--surface-2); border: 1px solid var(--grid); border-radius: 999px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
+.exbtn:active { background: var(--surface); }
+.exbtn:disabled { color: var(--muted); font-weight: 500; cursor: default; opacity: .7; }
 .expl { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; margin: 10px 0; font-size: 14px; line-height: 1.8; }
 .expl-h { font-weight: 700; font-size: 12px; color: var(--accent); margin-bottom: 4px; }
 .expl-ai { font-size: 11px; color: var(--muted); margin-top: 8px; }
@@ -652,7 +656,7 @@ function viewSummary() {
   </div>`;
   const body = BANK.length
     ? `<h2>年度別サマリ</h2><div class="card">${examSummaryHtml(true)}</div>
-       <div class="hint">弱点がある回をタップすると、その回の弱点だけを復習できます（緑=正解／赤=弱点、収録数に対する割合）。<br>${esc(BANK_META.source || '')}</div>`
+       <div class="hint">弱点がある回をタップすると、その回の弱点だけを復習できます（緑=正解／赤=弱点、収録数に対する割合）。各回の「未回答問題を実施」ボタンで、まだ解いていない問題だけを出題できます。<br>${esc(BANK_META.source || '')}</div>`
     : `<div class="card"><div class="empty">問題データが読み込めませんでした。<br>オンラインで開き直してください。</div></div>`;
   return `<h1>全体サマリ</h1>${stats}${body}`;
 }
@@ -661,6 +665,14 @@ function startYearReview(year, term) {
   const qs = shuffle(weakList().filter(q => q.year === year && q.term === term));
   if (!qs.length) { toast('この回に弱点はありません'); return; }
   state.practice = { mode: 'review', label: examLabel(year, term) + ' 復習', queue: qs.map(q => q.id), idx: 0, picked: null };
+  persistSession();
+  go('practice');
+}
+// 年度行の「未回答問題を実施」: その回で未挑戦（mastery記録なし）の問題だけを出題。未回答0なら開始しない。中断・再開はセッション機構で共通に動く。
+function startYearUnanswered(year, term) {
+  const qs = shuffle(BANK.filter(q => q.year === year && q.term === term && !isAttempted(q.id)));
+  if (!qs.length) { toast('この回に未回答の問題はありません'); return; }
+  state.practice = { mode: 'unanswered', label: examLabel(year, term) + ' 未回答', queue: qs.map(q => q.id), idx: 0, picked: null };
   persistSession();
   go('practice');
 }
@@ -734,13 +746,15 @@ function examSummaryHtml(tappable) {
     const rowAttr = canReview
       ? `class="exrow tap" role="button" tabindex="0" onclick="startYearReview(${e.year},'${e.term}')"`
       : 'class="exrow"';
-    const go = !tappable ? '' : (pr.weak > 0
-      ? `<div class="exgo-row"><span class="exgo">この回の弱点を復習 ▶</span></div>`
-      : `<div class="exgo-row"><span class="exgo none">弱点なし</span></div>`);
+    const un = pr.included - pr.attempted;   // 未回答（未挑戦）＝収録数−挑戦済み
+    const acts = !tappable ? '' : `<div class="exgo-row two">
+        ${pr.weak > 0 ? '<span class="exgo">この回の弱点を復習 ▶</span>' : '<span class="exgo none">弱点なし</span>'}
+        <button class="exbtn" ${un > 0 ? `onclick="event.stopPropagation();startYearUnanswered(${e.year},'${e.term}')"` : 'disabled'}>${un > 0 ? `未回答問題を実施（${un}問）▶` : '未回答なし'}</button>
+      </div>`;
     return `<div ${rowAttr}>
       <div class="exrow-h"><span class="exn">${esc(e.label)}${canReview ? ' <span class="tapmark">▶</span>' : ''}</span>
         <span class="exc num">収録${pr.included}問中 挑戦${pr.attempted}・<b style="color:var(--good)">正解${pr.correct}</b>・<b style="color:var(--danger)">弱点${pr.weak}</b></span></div>
-      ${progressBarHtml(pr)}${go}</div>`;
+      ${progressBarHtml(pr)}${acts}</div>`;
   }).join('');
 }
 // 中断セッションが有効か（キューの問題が現バンクに存在し、まだ残りがある）
@@ -1122,7 +1136,7 @@ if (typeof module !== 'undefined' && module.exports) {
     get store() { return store; }, set store(v) { store = v; },
     state, defaultStore, migrate,
     go, render, startAdd, formSet, saveForm, delLog, currentStreak, weekCount, weekCountFn: weekCount,
-    partAgg, logDates, recordPracticeAnswer, viewSummary, examSummaryHtml, startYearReview,
+    partAgg, logDates, recordPracticeAnswer, viewSummary, examSummaryHtml, startYearReview, startYearUnanswered,
     calSelect, startAddCal, calMove,
     statusOf, isAttempted, isWeak, isOk, weakList, applyResult, examProgress, validSession, persistSession, resumeSession,
     startPractice, answerQuiz, nextQuiz, endPractice, setQMemo, pickExam, qSource, examLabel, dojoUrl, UNKNOWN, qTextHtml,

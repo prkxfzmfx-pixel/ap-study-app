@@ -2,7 +2,7 @@
 // 問題ファイル(questions/*.js)・図表(questions/img/*)は数千規模になりうるため precache せず、
 // fetch ハンドラの実行時キャッシュ（ネットワーク優先→成功レスポンスを都度キャッシュ）に任せる。
 // precache する ASSETS はアプリシェル（起動に必須の少数ファイル）だけに絞る。
-const CACHE = 'apstudy-v20';
+const CACHE = 'apstudy-v21';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
   './questions/manifest.js',
   './icons/icon-192.png', './icons/icon-512.png'];
