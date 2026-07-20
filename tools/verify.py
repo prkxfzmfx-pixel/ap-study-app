@@ -96,6 +96,16 @@ def check_banks(ans, banks):
             for rel in re.findall(r'\[\[img:([^\]]+)\]\]', q.get('text', '')):
                 if not os.path.exists(os.path.join(ROOT, rel)):
                     errors.append(f'[B] {qid}: 問題文の画像が存在しない: {rel}')
+            # 選択肢が図の問題: choiceImages（肢別）は ア〜エ4キー＋各ファイル存在、choicesImage（合成）はファイル存在。
+            ciMap = q.get('choiceImages')
+            if ciMap is not None:
+                if sorted(ciMap.keys()) != ['ア', 'イ', 'ウ', 'エ']:
+                    errors.append(f'[B] {qid}: choiceImages がア〜エの4キーでない')
+                for kk, rel in ciMap.items():
+                    if not os.path.exists(os.path.join(ROOT, rel)):
+                        errors.append(f'[B] {qid}: choiceImages[{kk}] が存在しない: {rel}')
+            if q.get('choicesImage') and not os.path.exists(os.path.join(ROOT, q['choicesImage'])):
+                errors.append(f'[B] {qid}: choicesImage が存在しない: {q["choicesImage"]}')
             qn = str(q.get('qnum'))
             if qn in seen:
                 errors.append(f'[B] {key}: 問{qn} が重複')

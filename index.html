@@ -234,6 +234,9 @@ table.cal td .marks { display: flex; gap: 3px; justify-content: center; margin-t
 .choice.correct { background: var(--good-bg); border-color: var(--good); }
 .choice.wrong { background: var(--danger-bg); border-color: var(--danger); }
 .choice.dim { opacity: .55; }
+/* 選択肢が図の問題: 肢別画像／合成1枚画像 */
+.choice-img { max-width: 100%; height: auto; display: block; background: #fff; padding: 6px; border-radius: 6px; border: 1px solid var(--border); }
+.choices-composite { max-width: 100%; height: auto; display: block; margin: 0 auto 12px; background: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--border); }
 .verdict { text-align: center; font-weight: 800; font-size: 18px; margin: 10px 0 4px; }
 .verdict.ok { color: var(--good); }
 .verdict.ng { color: var(--danger); }
@@ -843,6 +846,9 @@ function viewQuiz() {
     <div class="qmeta"><span class="src">${esc(qSource(q))}</span></div>`;
 
   const keys = ['ア', 'イ', 'ウ', 'エ'];
+  // 選択肢が図の問題: choiceImages=肢別画像／choicesImage=合成1枚（ア〜エボタンのみ）
+  const ciMap = q.choiceImages || null;
+  const compImg = (!ciMap && q.choicesImage) ? `<img class="choices-composite" src="${esc(q.choicesImage)}" alt="選択肢ア〜エ" loading="lazy">` : '';
   let choices = keys.map(k => {
     let cls = 'choice';
     if (answered) {
@@ -851,8 +857,12 @@ function viewQuiz() {
       else cls += ' dim';
     }
     const oc = answered ? '' : `onclick="answerQuiz('${k}')"`;
-    return `<button class="${cls}" ${oc}><span class="k">${k}</span><span>${qTextHtml(q.choices[k] || '')}</span></button>`;
+    const body = ciMap && ciMap[k]
+      ? `<img class="choice-img" src="${esc(ciMap[k])}" alt="選択肢${k}" loading="lazy">`
+      : `<span>${qTextHtml(q.choices[k] || '')}</span>`;
+    return `<button class="${cls}" ${oc}><span class="k">${k}</span>${body}</button>`;
   }).join('');
+  choices = compImg + choices;
   // 5番目の「わからない」（ア〜エと区別できるスタイル）。選択＝不正解扱い。
   let ukCls = 'choice unknown';
   if (answered) ukCls += (p.picked === UNKNOWN) ? ' wrong' : ' dim';
